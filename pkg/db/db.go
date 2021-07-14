@@ -31,12 +31,12 @@ var db *sql.DB
 // This should only be called once before any other database function is called.
 //
 // Users need set environment variables for connection, including
-// 	* DB_HOST:          host address of target db instances, by default: localhost.
-//	* DB_PORT:          port number of postgres db, by default: 5432.
-//	* DB_USERNAME:      username of database, error would be returned if not set.
-//	* DB_PWD:           password of target database, error would be returned if not set.
-// 	* DB_NAME:          name of database for connection, error would be returned if not set.
-//	* DB_SOCKER_DIR:    directory of Unix socket in Cloud Run which serves as Cloud SQL
+//  * DB_HOST:          host address of target db instances, by default: localhost.
+//  * DB_PORT:          port number of postgres db, by default: 5432.
+//  * DB_USERNAME:      username of database, error would be returned if not set.
+//  * DB_PWD:           password of target database, error would be returned if not set.
+//  * DB_NAME:          name of database for connection, error would be returned if not set.
+//  * DB_SOCKER_DIR:    directory of Unix socket in Cloud Run which serves as Cloud SQL
 //                      Auth proxy to connect to postgres database.
 //                      If service is deployed on Cloud Run, just use the default value.
 //                      By default, it is set to `/cloudsql`.
