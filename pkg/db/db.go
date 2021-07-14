@@ -1,7 +1,8 @@
+// This package contains functions related to database.
+// * db.go includes conneting to db, query and insertion.
+// * dbschema.go contains definitions of struct for db tables.
+//   Currently it only contains Module struct.
 package db
-
-// This package contains function related to database,
-// including connect to db, query db and insert into db.
 
 import (
 	"database/sql"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"strconv"
 
+	// Go postgres driver for Go's database/sql package
 	_ "github.com/lib/pq"
 )
 
@@ -29,15 +31,15 @@ var db *sql.DB
 // This should only be called once before any other database function is called.
 //
 // Users need set environment variables for connection, including
-// 	* DB_HOST:			host address of target db instances, by default: localhost.
-//	* DB_PORT: 			port number of postgres db, by default: 5432.
-//	* DB_USERNAME:		username of database, error would be returned if not set.
-//	* DB_PWD:			password of target database, error would be returned if not set.
-// 	* DB_NAME:			name of database for connection, error would be returned if not set.
-//	* DB_SOCKER_DIR:	directory of Unix socket in Cloud Run which serves as Cloud SQL
-// 						Auth proxy to connect to postgres database.
-//						If service is deployed on Cloud Run, just use the default value.
-//						By default, it is set to `/cloudsql`.
+// 	* DB_HOST:          host address of target db instances, by default: localhost.
+//	* DB_PORT:          port number of postgres db, by default: 5432.
+//	* DB_USERNAME:      username of database, error would be returned if not set.
+//	* DB_PWD:           password of target database, error would be returned if not set.
+// 	* DB_NAME:          name of database for connection, error would be returned if not set.
+//	* DB_SOCKER_DIR:    directory of Unix socket in Cloud Run which serves as Cloud SQL
+//                      Auth proxy to connect to postgres database.
+//                      If service is deployed on Cloud Run, just use the default value.
+//                      By default, it is set to `/cloudsql`.
 func ConnectDB() error {
 	var isSet bool
 	var err error
@@ -91,7 +93,7 @@ func ConnectDB() error {
 	}
 
 	// see if connection is established successfully
-	if db.Ping() != nil {
+	if err = db.Ping(); err != nil {
 		return fmt.Errorf("ping database failed: %v", err)
 	}
 

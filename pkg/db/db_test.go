@@ -14,13 +14,13 @@ import (
 
 const (
 	createModuleTable = `create table if not exists modules (
-        orgName text NOT NULL, name text not null, version text not null,
+        orgName text NOT NULL, name text NOT NULL, version text NOT NULL,
         data jsonb NOT NULL, primary key (orgName, name, version)
 		)`
 	dropModuleTable = `drop table modules`
 )
 
-// helper function to create module table in test database
+// Helper function to create module table in test database.
 func CreateModuleTable() error {
 	_, err := db.Exec(createModuleTable)
 	if err != nil {
@@ -29,7 +29,7 @@ func CreateModuleTable() error {
 	return nil
 }
 
-// helper function to drop test table in test database
+// Helper function to drop test table in test database.
 func DropModuleTable() error {
 	_, err := db.Exec(dropModuleTable)
 	if err != nil {
@@ -38,55 +38,52 @@ func DropModuleTable() error {
 	return nil
 }
 
-// Test Insertion of Modules into database
+// Test Insertion of Modules into database.
 func TestInsertModule(t *testing.T) {
 	tests := []struct {
-		orgName string
-		name    string
-		version string
-		data    string
-		wanterr bool
+		inOrgName string
+		inName    string
+		inVersion string
+		inData    string
+		wantErr   bool
 	}{
 		{
-			orgName: "org_A",
-			name:    "module_A",
-			version: "version_A",
-			data:    "{}",
-			wanterr: false,
+			inOrgName: "org_A",
+			inName:    "module_A",
+			inVersion: "version_A",
+			inData:    "{}",
+			wantErr:   false,
 		},
 		// Invalid json string, insertion should fail
 		{
-			orgName: "org_B",
-			name:    "module_B",
-			version: "version_B",
-			data:    "",
-			wanterr: true,
+			inOrgName: "org_B",
+			inName:    "module_B",
+			inVersion: "version_B",
+			inData:    "",
+			wantErr:   true,
 		},
 	}
-	var err error
-	err = ConnectDB()
+
+	err := ConnectDB()
 	if err != nil {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	err = CreateModuleTable()
-	if err != nil {
+	if err := CreateModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 	for _, tc := range tests {
-		err = InsertModule(tc.orgName, tc.name, tc.version, tc.data)
-		haserr := (err != nil)
-		if haserr != tc.wanterr {
-			t.Errorf("insert module result mismatch, orgName: %s, name: %s, version: %s, data: %s, err: %v", tc.orgName, tc.name, tc.version, tc.data, err)
+		err = InsertModule(tc.inOrgName, tc.inName, tc.inVersion, tc.inData)
+		if haserr := (err != nil); haserr != tc.wantErr {
+			t.Errorf("insert module result mismatch, orgName: %s, name: %s, version: %s, data: %s, err: %v", tc.inOrgName, tc.inName, tc.inVersion, tc.inData, err)
 		}
 	}
-	err = DropModuleTable()
-	if err != nil {
+	if err := DropModuleTable(); err != nil {
 		t.Errorf("drop table failed, err: %v", err)
 	}
 }
 
-// Test Query Module By orgName
+// Test Query Module By orgName.
 func TestQueryModulesByOrgName(t *testing.T) {
 	inputs := struct {
 		orgNames []string
@@ -161,18 +158,16 @@ func TestQueryModulesByOrgName(t *testing.T) {
 		},
 	}
 
-	var err error
-	err = ConnectDB()
+	err := ConnectDB()
 	if err != nil {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	err = CreateModuleTable()
-	if err != nil {
+	if err := CreateModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 	for i := 0; i < len(inputs.names); i++ {
-		err = InsertModule(inputs.orgNames[i], inputs.names[i], inputs.versions[i], inputs.datas[i])
+		err := InsertModule(inputs.orgNames[i], inputs.names[i], inputs.versions[i], inputs.datas[i])
 		if err != nil {
 			t.Errorf("pre insertion before query test failed: %v", err)
 		}
@@ -192,13 +187,12 @@ func TestQueryModulesByOrgName(t *testing.T) {
 		}
 	}
 
-	err = DropModuleTable()
-	if err != nil {
+	if err := DropModuleTable(); err != nil {
 		t.Errorf("drop table failed, err: %v", err)
 	}
 }
 
-// Test query Module by its key (name, version)
+// Test query Module by its key (name, version).
 func TestQueryModulesByKey(t *testing.T) {
 	inputs := struct {
 		orgNames []string
@@ -314,14 +308,12 @@ func TestQueryModulesByKey(t *testing.T) {
 		},
 	}
 
-	var err error
-	err = ConnectDB()
+	err := ConnectDB()
 	if err != nil {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	err = CreateModuleTable()
-	if err != nil {
+	if err := CreateModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 	for i := 0; i < len(inputs.names); i++ {
@@ -349,8 +341,7 @@ func TestQueryModulesByKey(t *testing.T) {
 		}
 	}
 
-	err = DropModuleTable()
-	if err != nil {
+	if err := DropModuleTable(); err != nil {
 		t.Errorf("drop table failed, err: %v", err)
 	}
 }
