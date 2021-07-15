@@ -46,6 +46,7 @@ func TestInsertModule(t *testing.T) {
 		inVersion string
 		inData    string
 		wantErr   bool
+		desc      string
 	}{
 		{
 			inOrgName: "org_A",
@@ -53,14 +54,15 @@ func TestInsertModule(t *testing.T) {
 			inVersion: "version_A",
 			inData:    "{}",
 			wantErr:   false,
+			desc:      "Test to insert one Module, expect to succeed",
 		},
-		// Invalid json string, insertion should fail
 		{
 			inOrgName: "org_B",
 			inName:    "module_B",
 			inVersion: "version_B",
 			inData:    "",
 			wantErr:   true,
+			desc:      "Test to insert one Module with invalid json string, expect to fail",
 		},
 	}
 
@@ -99,6 +101,7 @@ func TestQueryModulesByOrgName(t *testing.T) {
 	tests := []struct {
 		orgName string
 		want    []Module
+		desc    string
 	}{
 		{
 			orgName: "org1",
@@ -116,6 +119,7 @@ func TestQueryModulesByOrgName(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query with orgName with two matching Modules",
 		},
 		{
 			orgName: "org2",
@@ -127,12 +131,13 @@ func TestQueryModulesByOrgName(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query with orgName with only one matching Modules",
 		},
 		{
 			orgName: "org3",
-			want:    []Module{},
+			want:    nil,
+			desc:    "Test to query with orgName with no matching Module",
 		},
-		// special test case, set *string orgName to nil for this test
 		{
 			orgName: "nil",
 			want: []Module{
@@ -155,6 +160,7 @@ func TestQueryModulesByOrgName(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query without orgName as query parameter, it equals to searching for all existing modules",
 		},
 	}
 
@@ -173,18 +179,20 @@ func TestQueryModulesByOrgName(t *testing.T) {
 		}
 	}
 	for _, tc := range tests {
-		var modules []Module
-		if tc.orgName != "nil" {
-			modules, err = QueryModulesByOrgName(&tc.orgName)
-		} else {
-			modules, err = QueryModulesByOrgName(nil)
-		}
-		if err != nil {
-			t.Errorf("query by orgName failed, orgName: %s, err: %v", tc.orgName, err)
-		}
-		if !reflect.DeepEqual(modules, tc.want) {
-			t.Errorf("query results mismatch, orgName: %s", tc.orgName)
-		}
+		t.Run(fmt.Sprintf("TestQueryByOrgName %s, param orgName: %s", tc.desc, tc.orgName), func(t *testing.T) {
+			var modules []Module
+			if tc.orgName != "nil" {
+				modules, err = QueryModulesByOrgName(&tc.orgName)
+			} else {
+				modules, err = QueryModulesByOrgName(nil)
+			}
+			if err != nil {
+				t.Errorf("query by orgName failed, orgName: %s, err: %v", tc.orgName, err)
+			}
+			if !reflect.DeepEqual(modules, tc.want) {
+				t.Errorf("query results mismatch, orgName: %s", tc.orgName)
+			}
+		})
 	}
 
 	if err := DropModuleTable(); err != nil {
@@ -210,6 +218,7 @@ func TestQueryModulesByKey(t *testing.T) {
 		name    string
 		version string
 		want    []Module
+		desc    string
 	}{
 		{
 			name:    "name1",
@@ -228,6 +237,7 @@ func TestQueryModulesByKey(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query with both name and version",
 		},
 		{
 			name:    "name2",
@@ -246,6 +256,7 @@ func TestQueryModulesByKey(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query with only name as query parameter",
 		},
 		{
 			name:    "nil",
@@ -264,6 +275,7 @@ func TestQueryModulesByKey(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query with only version as query parameter",
 		},
 		{
 			name:    "nil",
@@ -300,11 +312,13 @@ func TestQueryModulesByKey(t *testing.T) {
 					Data:    "{}",
 				},
 			},
+			desc: "Test to query with no query parameters which equals query all models",
 		},
 		{
 			name:    "name5",
 			version: "v5",
-			want:    []Module{},
+			want:    nil,
+			desc:    "Test to query with key of no matching modules",
 		},
 	}
 
@@ -323,22 +337,24 @@ func TestQueryModulesByKey(t *testing.T) {
 		}
 	}
 	for _, tc := range tests {
-		var modules []Module
-		if tc.name != "nil" && tc.version != "nil" {
-			modules, err = QueryModulesByKey(&tc.name, &tc.version)
-		} else if tc.name != "nil" {
-			modules, err = QueryModulesByKey(&tc.name, nil)
-		} else if tc.version != "nil" {
-			modules, err = QueryModulesByKey(nil, &tc.version)
-		} else {
-			modules, err = QueryModulesByKey(nil, nil)
-		}
-		if err != nil {
-			t.Errorf("query by orgName failed, name: %s, version: %s, err: %v", tc.name, tc.version, err)
-		}
-		if !reflect.DeepEqual(modules, tc.want) {
-			t.Errorf("query results mismatch, name: %s, version: %s", tc.name, tc.version)
-		}
+		t.Run(fmt.Sprintf("TestQueryByKey %s, param name: %s, version: %s", tc.desc, tc.name, tc.version), func(t *testing.T) {
+			var modules []Module
+			if tc.name != "nil" && tc.version != "nil" {
+				modules, err = QueryModulesByKey(&tc.name, &tc.version)
+			} else if tc.name != "nil" {
+				modules, err = QueryModulesByKey(&tc.name, nil)
+			} else if tc.version != "nil" {
+				modules, err = QueryModulesByKey(nil, &tc.version)
+			} else {
+				modules, err = QueryModulesByKey(nil, nil)
+			}
+			if err != nil {
+				t.Errorf("query by orgName failed, name: %s, version: %s, err: %v", tc.name, tc.version, err)
+			}
+			if !reflect.DeepEqual(modules, tc.want) {
+				t.Errorf("query results mismatch, name: %s, version: %s", tc.name, tc.version)
+			}
+		})
 	}
 
 	if err := DropModuleTable(); err != nil {

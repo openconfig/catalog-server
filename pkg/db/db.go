@@ -1,7 +1,9 @@
-// This package contains functions related to database.
-// * db.go includes conneting to db, query and insertion.
-// * dbschema.go contains definitions of struct for db tables.
-//   Currently it only contains Module struct.
+/*
+Package db contains functions related to database.
+ * db.go includes conneting to db, query and insertion.
+ * dbschema.go contains definitions of struct for db tables.
+   Currently it only contains Module struct.
+*/
 package db
 
 import (
@@ -41,21 +43,15 @@ var db *sql.DB
 //                      If service is deployed on Cloud Run, just use the default value.
 //                      By default, it is set to `/cloudsql`.
 func ConnectDB() error {
-	var isSet bool
+	var ok bool
 	var err error
 	var port int
 	var psqlconn string
 
 	// read db config from env
 
-	host, isSet := os.LookupEnv("DB_HOST")
-	if !isSet {
-		fmt.Println("DB_HOST not set, set host to localhost")
-		host = "localhost"
-	}
-
-	portStr, isSet := os.LookupEnv("DB_PORT")
-	if !isSet {
+	portStr, ok := os.LookupEnv("DB_PORT")
+	if !ok {
 		fmt.Println("DB_PORT not set, set port to 5432")
 		port = 5432
 	} else {
@@ -65,26 +61,38 @@ func ConnectDB() error {
 		}
 	}
 
-	user, isSet := os.LookupEnv("DB_USERNAME")
-	if !isSet {
+	user, ok := os.LookupEnv("DB_USERNAME")
+	if !ok {
 		return fmt.Errorf("DB_USERNAME not set")
 	}
 
-	password, isSet := os.LookupEnv("DB_PWD")
-	if !isSet {
+	password, ok := os.LookupEnv("DB_PWD")
+	if !ok {
 		return fmt.Errorf("DB_PWD not set")
 	}
 
-	dbname, isSet := os.LookupEnv("DB_NAME")
-	if !isSet {
+	dbname, ok := os.LookupEnv("DB_NAME")
+	if !ok {
 		return fmt.Errorf("DB_NAME not set")
 	}
 
-	socketDir, isSet := os.LookupEnv("DB_SOCKET_DIR")
-	if !isSet {
+	socketDir, ok := os.LookupEnv("DB_SOCKET_DIR")
+	if !ok {
 		socketDir = "/cloudsql"
 	}
-	psqlconn = fmt.Sprintf("host=%s/%s port=%d user=%s password=%s dbname=%s", socketDir, host, port, user, password, dbname)
+
+	host, ok := os.LookupEnv("DB_HOST")
+	if !ok || host == "localhost" {
+		if !ok {
+			fmt.Println("DB_HOST not set, set host to localhost")
+			host = "localhost"
+		}
+		// This connection string is used if service is not deployed on Cloud Run,
+		// instead connection is made from localhost via Cloud SQL proxy.
+		psqlconn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	} else {
+		psqlconn = fmt.Sprintf("host=%s/%s port=%d user=%s password=%s dbname=%s", socketDir, host, port, user, password, dbname)
+	}
 
 	// open database
 	db, err = sql.Open("postgres", psqlconn)
@@ -103,8 +111,7 @@ func ConnectDB() error {
 // Insert module into database given values of four field of MODULE schema.
 // Error is returned when insertion failed.
 func InsertModule(orgName string, name string, version string, data string) error {
-	_, err := db.Exec(insertModule, orgName, name, version, data)
-	if err != nil {
+	if _, err := db.Exec(insertModule, orgName, name, version, data); err != nil {
 		return fmt.Errorf("insert module into db failed: %v", err)
 	}
 	return nil
@@ -114,7 +121,7 @@ func InsertModule(orgName string, name string, version string, data string) erro
 // Return slice of db Module struct each field of which corresponds to one column in db.
 // Error is returned when scan rows failed.
 func ReadModluesByRow(rows *sql.Rows) ([]Module, error) {
-	modules := make([]Module, 0)
+	var modules []Module
 	for rows.Next() {
 		var rowOrgName string
 		var rowName string
