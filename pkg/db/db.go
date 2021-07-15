@@ -45,44 +45,42 @@ var db *sql.DB
 func ConnectDB() error {
 	var ok bool
 	var err error
-	var port int
-	var psqlconn string
+	var port int         // port number of target database
+	var user string      // username of target database
+	var password string  // password of target database
+	var dbname string    // name of target database
+	var host string      // host address of target database
+	var socketDir string // (Cloud Run only) Directory of Unix socket
+	var psqlconn string  // connection string used to connect to traget database
 
 	// read db config from env
 
-	portStr, ok := os.LookupEnv("DB_PORT")
-	if !ok {
+	if portStr, ok := os.LookupEnv("DB_PORT"); !ok {
 		fmt.Println("DB_PORT not set, set port to 5432")
 		port = 5432
 	} else {
-		port, err = strconv.Atoi(portStr)
-		if err != nil {
+		if port, err = strconv.Atoi(portStr); err != nil {
 			return fmt.Errorf("parse port failed: %v", err)
 		}
 	}
 
-	user, ok := os.LookupEnv("DB_USERNAME")
-	if !ok {
+	if user, ok = os.LookupEnv("DB_USERNAME"); !ok {
 		return fmt.Errorf("DB_USERNAME not set")
 	}
 
-	password, ok := os.LookupEnv("DB_PWD")
-	if !ok {
+	if password, ok = os.LookupEnv("DB_PWD"); !ok {
 		return fmt.Errorf("DB_PWD not set")
 	}
 
-	dbname, ok := os.LookupEnv("DB_NAME")
-	if !ok {
+	if dbname, ok = os.LookupEnv("DB_NAME"); !ok {
 		return fmt.Errorf("DB_NAME not set")
 	}
 
-	socketDir, ok := os.LookupEnv("DB_SOCKET_DIR")
-	if !ok {
+	if socketDir, ok = os.LookupEnv("DB_SOCKET_DIR"); !ok {
 		socketDir = "/cloudsql"
 	}
 
-	host, ok := os.LookupEnv("DB_HOST")
-	if !ok || host == "localhost" {
+	if host, ok = os.LookupEnv("DB_HOST"); !ok || host == "localhost" {
 		if !ok {
 			fmt.Println("DB_HOST not set, set host to localhost")
 			host = "localhost"
@@ -123,19 +121,11 @@ func InsertModule(orgName string, name string, version string, data string) erro
 func ReadModluesByRow(rows *sql.Rows) ([]Module, error) {
 	var modules []Module
 	for rows.Next() {
-		var rowOrgName string
-		var rowName string
-		var rowVersion string
-		var rowData string
-		if err := rows.Scan(&rowOrgName, &rowName, &rowVersion, &rowData); err != nil {
+		var module Module
+		if err := rows.Scan(&module.OrgName, &module.Name, &module.Version, &module.Data); err != nil {
 			return nil, fmt.Errorf("scan db rows failure, %v", err)
 		}
-		modules = append(modules, Module{
-			OrgName: rowOrgName,
-			Name:    rowName,
-			Version: rowVersion,
-			Data:    rowData,
-		})
+		modules = append(modules, module)
 	}
 	return modules, nil
 }
@@ -201,6 +191,6 @@ func QueryModulesByKey(name *string, version *string) ([]Module, error) {
 }
 
 // Close db connection
-func Close() {
-	db.Close()
+func Close() error {
+	return db.Close()
 }
