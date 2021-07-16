@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	// Go postgres driver for Go's database/sql package
+	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 )
 
@@ -39,8 +40,6 @@ var db *sql.DB
 //                      If service is deployed on Cloud Run, just use the default value.
 //                      By default, it is set to `/cloudsql`.
 func ConnectDB() error {
-	var ok bool
-	var err error
 	var port int         // port number of target database
 	var user string      // username of target database
 	var password string  // password of target database
@@ -51,16 +50,18 @@ func ConnectDB() error {
 
 	// read db config from env
 
+	port = 5432
 	if portStr, ok := os.LookupEnv("DB_PORT"); !ok {
-		fmt.Println("DB_PORT not set, set port to 5432")
-		port = 5432
+		glog.Infof("DB_PORT not set, setting port to %d", port)
 	} else {
+		var err error
 		if port, err = strconv.Atoi(portStr); err != nil {
-			return fmt.Errorf("parse port failed: %v", err)
+			return fmt.Errorf("DB_PORT in incorrect format: %v", err)
 		}
 	}
 
-	if user, ok = os.LookupEnv("DB_USERNAME"); !ok {
+	user, ok := os.LookupEnv("DB_USERNAME")
+	if !ok {
 		return fmt.Errorf("DB_USERNAME not set")
 	}
 
@@ -76,26 +77,29 @@ func ConnectDB() error {
 		socketDir = "/cloudsql"
 	}
 
-	if host, ok = os.LookupEnv("DB_HOST"); !ok || host == "localhost" {
-		if !ok {
-			fmt.Println("DB_HOST not set, set host to localhost")
-			host = "localhost"
-		}
+	host, ok = os.LookupEnv("DB_HOST")
+	switch {
+	case !ok:
+		glog.Infoln("DB_HOST not set, setting host to localhost")
+		host = "localhost"
+		fallthrough
+	case host == "localhost":
 		// This connection string is used if service is not deployed on Cloud Run,
 		// instead connection is made from localhost via Cloud SQL proxy.
 		psqlconn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	} else {
+	default:
 		psqlconn = fmt.Sprintf("host=%s/%s port=%d user=%s password=%s dbname=%s", socketDir, host, port, user, password, dbname)
 	}
 
 	// open database
+	var err error
 	db, err = sql.Open("postgres", psqlconn)
 	if err != nil {
 		return fmt.Errorf("open database failed: %v", err)
 	}
 
 	// see if connection is established successfully
-	if err = db.Ping(); err != nil {
+	if err := db.Ping(); err != nil {
 		return fmt.Errorf("ping database failed: %v", err)
 	}
 
