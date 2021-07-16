@@ -12,8 +12,9 @@ import (
 	"os"
 	"strconv"
 
-	// Go postgres driver for Go's database/sql package
 	"github.com/golang/glog"
+
+	// Go postgres driver for Go's database/sql package
 	_ "github.com/lib/pq"
 )
 
@@ -40,17 +41,10 @@ var db *sql.DB
 //                      If service is deployed on Cloud Run, just use the default value.
 //                      By default, it is set to `/cloudsql`.
 func ConnectDB() error {
-	var port int         // port number of target database
-	var user string      // username of target database
-	var password string  // password of target database
-	var dbname string    // name of target database
-	var host string      // host address of target database
-	var socketDir string // (Cloud Run only) Directory of Unix socket
-	var psqlconn string  // connection string used to connect to traget database
-
 	// read db config from env
 
-	port = 5432
+	// port number of target database
+	port := 5432
 	if portStr, ok := os.LookupEnv("DB_PORT"); !ok {
 		glog.Infof("DB_PORT not set, setting port to %d", port)
 	} else {
@@ -60,24 +54,34 @@ func ConnectDB() error {
 		}
 	}
 
+	// username of target database
 	user, ok := os.LookupEnv("DB_USERNAME")
 	if !ok {
 		return fmt.Errorf("DB_USERNAME not set")
 	}
 
-	if password, ok = os.LookupEnv("DB_PWD"); !ok {
+	// password of target database
+	password, ok := os.LookupEnv("DB_PWD")
+	if !ok {
 		return fmt.Errorf("DB_PWD not set")
 	}
 
-	if dbname, ok = os.LookupEnv("DB_NAME"); !ok {
+	// name of target database
+	dbname, ok := os.LookupEnv("DB_NAME")
+	if !ok {
 		return fmt.Errorf("DB_NAME not set")
 	}
 
-	if socketDir, ok = os.LookupEnv("DB_SOCKET_DIR"); !ok {
+	// (Cloud Run only) Directory of Unix socket
+	socketDir, ok := os.LookupEnv("DB_SOCKET_DIR")
+	if !ok {
 		socketDir = "/cloudsql"
 	}
 
-	host, ok = os.LookupEnv("DB_HOST")
+	var psqlconn string // connection string used to connect to traget database
+
+	// host address of target database
+	host, ok := os.LookupEnv("DB_HOST")
 	switch {
 	case !ok:
 		glog.Infoln("DB_HOST not set, setting host to localhost")
@@ -106,6 +110,11 @@ func ConnectDB() error {
 	return nil
 }
 
+// Close db connection
+func Close() error {
+	return db.Close()
+}
+
 // Insert module into database given values of four field of MODULE schema.
 // Error is returned when insertion failed.
 func InsertModule(orgName string, name string, version string, data string) error {
@@ -118,7 +127,7 @@ func InsertModule(orgName string, name string, version string, data string) erro
 // Scan from queried modules from rows one by one, rows are *not* closed inside.
 // Return slice of db Module struct each field of which corresponds to one column in db.
 // Error is returned when scan rows failed.
-func ReadModluesByRow(rows *sql.Rows) ([]Module, error) {
+func ReadModulesByRow(rows *sql.Rows) ([]Module, error) {
 	var modules []Module
 	for rows.Next() {
 		var module Module
@@ -169,7 +178,7 @@ func QueryModulesByOrgName(orgName *string) ([]Module, error) {
 
 	defer rows.Close()
 
-	return ReadModluesByRow(rows)
+	return ReadModulesByRow(rows)
 }
 
 // Query modules by its key (name, version), it is possible that parameters are null.
@@ -200,10 +209,5 @@ func QueryModulesByKey(name *string, version *string) ([]Module, error) {
 
 	defer rows.Close()
 
-	return ReadModluesByRow(rows)
-}
-
-// Close db connection
-func Close() error {
-	return db.Close()
+	return ReadModulesByRow(rows)
 }
