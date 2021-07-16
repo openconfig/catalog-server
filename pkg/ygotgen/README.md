@@ -1,0 +1,1 @@
+To generate `ygotgen.go`, run `bash gen.sh` in `ygotgen` directory.
