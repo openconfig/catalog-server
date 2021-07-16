@@ -16,15 +16,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Put all used SQL statments here for easy maintainess and tracking.
-// To support more operations (query/update), just append this const list.
+// SQL stataments used in this package.
+// Query statements can be appended based on its query parameters.
 const (
-	insertModule            = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4)`
-	allModules              = `select * from modules`
-	modulesByOrgName        = `select * from modules where orgName=$1`
-	modulesByName           = `select * from modules where name=$1`
-	modulesByVersion        = `select * from modules where version=$1`
-	modulesByNameAndVersion = `select * from modules where name=$1 and version=$2`
+	insertModule  = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4)`
+	selectModules = `select * from modules`
 )
 
 var db *sql.DB
@@ -130,24 +126,41 @@ func ReadModluesByRow(rows *sql.Rows) ([]Module, error) {
 	return modules, nil
 }
 
+// This function is used to generate query statement string based on query parameters.
+// * parmNames is a list of names of all non-nil query parameters.
+// * baseQuery is query statement without any query parameters.
+func FormatQueryStr(parmNames []string, baseQuery string) string {
+	queryStmt := baseQuery
+	for i := 0; i < len(parmNames); i++ {
+		if i == 0 {
+			queryStmt += " where"
+		} else {
+			queryStmt += " and"
+		}
+		queryStmt += fmt.Sprintf(" %s=$%d", parmNames[i], i+1)
+	}
+	return queryStmt
+}
+
 // Query modules of organization with *orgName* from database.
 // If orgName is null then directly query all modules.
 // Return slice of db Module struct each field of which corresponds to one column in db.
 // Error is returned when query or reading data failed.
 func QueryModulesByOrgName(orgName *string) ([]Module, error) {
-	var rows *sql.Rows
-	var err error
+	parms := []interface{}{} // parms is used to store value of non-nil query parameters
+	parmNames := []string{}  // parmNames is used to store name of non-nil query parameters
 
 	if orgName != nil {
-		rows, err = db.Query(modulesByOrgName, *orgName)
-		if err != nil {
-			return nil, fmt.Errorf("QueryModulesByOrgName failed: %v, query param orgName: %s", err, *orgName)
-		}
-	} else {
-		rows, err = db.Query(allModules)
-		if err != nil {
-			return nil, fmt.Errorf("QueryModulesByOrgName failed: %v", err)
-		}
+		parms = append(parms, *orgName)
+		parmNames = append(parmNames, "orgName")
+	}
+
+	// Format query statement string based on non-nil query parameters
+	queryStmt := FormatQueryStr(parmNames, selectModules)
+
+	rows, err := db.Query(queryStmt, parms...)
+	if err != nil {
+		return nil, fmt.Errorf("QueryModulesByOrgName failed: %v", err)
 	}
 
 	defer rows.Close()
@@ -160,29 +173,25 @@ func QueryModulesByOrgName(orgName *string) ([]Module, error) {
 // Return slice of db Module struct each field of which corresponds to one column in db.
 // Error is returned when query or reading data failed.
 func QueryModulesByKey(name *string, version *string) ([]Module, error) {
-	var rows *sql.Rows
-	var err error
+	parms := []interface{}{} // parms is used to store value of non-nil query parameters
+	parmNames := []string{}  // parmNames is used to store name of non-nil query parameters
 
-	if name != nil && version != nil {
-		rows, err = db.Query(modulesByNameAndVersion, *name, *version)
-		if err != nil {
-			return nil, fmt.Errorf("QueryModulesByKey failed: %v, query param name: %s, version: %s", err, *name, *version)
-		}
-	} else if name != nil {
-		rows, err = db.Query(modulesByName, *name)
-		if err != nil {
-			return nil, fmt.Errorf("QueryModulesByKey failed: %v, query param name: %s", err, *name)
-		}
-	} else if version != nil {
-		rows, err = db.Query(modulesByVersion, *version)
-		if err != nil {
-			return nil, fmt.Errorf("QueryModulesByKey failed: %v, query param version: %s", err, *version)
-		}
-	} else {
-		rows, err = db.Query(allModules)
-		if err != nil {
-			return nil, fmt.Errorf("QueryModulesByKey failed: %v", err)
-		}
+	if name != nil {
+		parms = append(parms, *name)
+		parmNames = append(parmNames, "name")
+	}
+
+	if version != nil {
+		parms = append(parms, *version)
+		parmNames = append(parmNames, "version")
+	}
+
+	// Format query statement string based on non-nil query parameters
+	queryStmt := FormatQueryStr(parmNames, selectModules)
+
+	rows, err := db.Query(queryStmt, parms...)
+	if err != nil {
+		return nil, fmt.Errorf("QueryModulesByOrgName failed: %v", err)
 	}
 
 	defer rows.Close()
