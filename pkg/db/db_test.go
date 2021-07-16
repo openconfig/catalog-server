@@ -12,6 +12,7 @@ import (
 // To run these tests, you need to set up enviroment variables
 // for connection to a testing and *clean* database.
 
+// These are SQL statements for testing purpose to create Module table and drop Module table.
 const (
 	createModuleTable = `create table if not exists modules (
         orgName text NOT NULL, name text NOT NULL, version text NOT NULL,
@@ -20,7 +21,7 @@ const (
 	dropModuleTable = `drop table modules`
 )
 
-// Helper function to create module table in test database.
+// CreateModuleTable is helper function to create module table in test database.
 func CreateModuleTable() error {
 	_, err := db.Exec(createModuleTable)
 	if err != nil {
@@ -29,7 +30,7 @@ func CreateModuleTable() error {
 	return nil
 }
 
-// Helper function to drop test table in test database.
+// DropModuleTable is helper function to drop test table in test database.
 func DropModuleTable() error {
 	_, err := db.Exec(dropModuleTable)
 	if err != nil {
@@ -38,7 +39,7 @@ func DropModuleTable() error {
 	return nil
 }
 
-// Test Insertion of Modules into database.
+// TestInsertModule tests Insertion of Modules into database.
 func TestInsertModule(t *testing.T) {
 	tests := []struct {
 		inOrgName string
@@ -85,7 +86,7 @@ func TestInsertModule(t *testing.T) {
 	}
 }
 
-// Test Query Module By orgName.
+// TestQueryModulesByOrgName tests Query Module By orgName.
 func TestQueryModulesByOrgName(t *testing.T) {
 	inputs := struct {
 		orgNames []string
@@ -200,7 +201,7 @@ func TestQueryModulesByOrgName(t *testing.T) {
 	}
 }
 
-// Test query Module by its key (name, version).
+// TestQueryModulesByKey tests query Module by its key (name, version).
 func TestQueryModulesByKey(t *testing.T) {
 	inputs := struct {
 		orgNames []string
