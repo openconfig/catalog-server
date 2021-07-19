@@ -1,0 +1,11 @@
+type Module {
+  OrgName: String!
+  Name: String!
+  Version: String!
+  Data: String!
+}
+
+type Query {
+  ModulesByOrgName(OrgName: String): [Module!]!
+  ModulesByKey(Name: String, Version: String): [Module!]!
+}
