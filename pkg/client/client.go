@@ -15,6 +15,9 @@ import (
 	oc "github.com/openconfig/catalog-server/pkg/ygotgen"
 )
 
+// All responses from server are put inside a field called `data` of json string.
+const dataField = "data"
+
 // ReadAuthToken takes in *filepath* of token file, reads token and returns token string.
 // This token is used when server is deployed on Google Cloud Run and only avaiable to permitted users.
 // In this case, users need to include a header with identity token to get access to catalog server.
@@ -52,7 +55,7 @@ func QueryServer(req *http.Request) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Query server failed: %v", err)
+		return "", fmt.Errorf("Send formatted query to server failed: %v", err)
 	}
 	// Check whether status code is OK.
 	if resp.StatusCode != http.StatusOK {
@@ -75,13 +78,13 @@ func ParseModule(resp string, fieldName string, queryName string) ([]oc.Openconf
 	if err := json.Unmarshal([]byte(resp), &moduleMap); err != nil {
 		return nil, fmt.Errorf("Unmarshal response into json failed: %v", err)
 	}
-	// All responses from server are put inside a field called `data` in json string.
+	// Retrive *dataField* field from response json string.
 	// Then we retrive responses from filed of *queryName*.
-	dataJson := moduleMap["data"].(map[string]interface{})[queryName].([]interface{})
+	dataJSON := moduleMap[dataField].(map[string]interface{})[queryName].([]interface{})
 	var modules []oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module
-	for i := 0; i < len(dataJson); i++ {
+	for i := 0; i < len(dataJSON); i++ {
 		// Retrieve json string of Module from *filedName* field.
-		moduleJson := dataJson[i].(map[string]interface{})[fieldName].(string)
+		moduleJson := dataJSON[i].(map[string]interface{})[fieldName].(string)
 		module := &oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module{}
 		if err := oc.Unmarshal([]byte(moduleJson), module); err != nil {
 			return nil, fmt.Errorf("Cannot unmarshal JSON: %v", err)
