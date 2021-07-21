@@ -13,7 +13,7 @@ func main() {
 	var queryPtr = flag.String("query", "", "query url")
 	var tokenPathPtr = flag.String("token", "", "file path of auth token")
 	var queryNamePtr = flag.String("queryName", "", "name of query")
-	var fieldNamePtr = flag.String("filedName", "Data", "name of field in response containing json data")
+	var fieldNamePtr = flag.String("fieldName", "Data", "name of field in response containing json data")
 
 	flag.Parse()
 
