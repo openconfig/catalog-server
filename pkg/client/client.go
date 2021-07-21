@@ -50,7 +50,7 @@ func FormatHTTPQuery(query string, filepath string) (*http.Request, error) {
 	return req, nil
 }
 
-// QueryServer sends formatted query request (*req*) to catalog server and returns string of boday if no errors encountered.
+// QueryServer sends formatted query request (*req*) to catalog server and returns string of body if no errors encountered.
 func QueryServer(req *http.Request) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)

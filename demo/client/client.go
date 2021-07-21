@@ -20,19 +20,19 @@ func main() {
 	// Format HTTP query.
 	req, err := client.FormatHTTPQuery(*queryPtr, *tokenPathPtr)
 	if err != nil {
-		glog.Fatal("Format query failed: %v", err)
+		glog.Fatalf("catalog client: format query failed: %v", err)
 	}
 
 	// Send query to server and receive response.
 	resp, err := client.QueryServer(req)
 	if err != nil {
-		glog.Fatal("Query server failed: %v", err)
+		glog.Fatalf("catalog client: query server failed: %v", err)
 	}
 
 	// Parse query results.
 	modules, err := client.ParseModule(resp, *fieldNamePtr, *queryNamePtr)
 	if err != nil {
-		glog.Fatal("Parse into modules failed: %v", err)
+		glog.Fatalf("catalog client: parse response into go catalog modules failed: %v", err)
 	}
 
 	// Print out names of all matched modules just for testing parsing is correct.
