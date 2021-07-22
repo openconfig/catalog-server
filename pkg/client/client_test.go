@@ -34,8 +34,8 @@ func ReadTestData(filename string) (string, error) {
 
 	// Append testdata line by line.
 	for scanner.Scan() {
-		// Trim spaces in each line, otherwise parsing string back to Module struct would fail.
-		testdata += strings.TrimSpace(scanner.Text())
+		// Strip \newline in each line, otherwise parsing string back to Module struct would fail.
+		testdata += scanner.Text()
 	}
 	return testdata, nil
 }
@@ -108,6 +108,9 @@ func TestQuery(t *testing.T) {
 				t.Errorf("Send query to server failed: %v", err)
 			}
 			modules, err := ParseModule(resp, rawFieldName, tc.queryName)
+			if err != nil {
+				t.Errorf("Parse Module failed: %v", err)
+			}
 			if len(modules) != len(tc.wantModuleNames) {
 				t.Errorf("Parsed Modules length mismatch, get: %d, want: %d", len(modules), len(tc.wantModuleNames))
 			}
