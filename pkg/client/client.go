@@ -22,7 +22,7 @@ const dataField = "data"
 // This token is used when server is deployed on Google Cloud Run and only avaiable to permitted users.
 // In this case, users need to include a header with identity token to get access to catalog server.
 // This token can be obtained via the command `glcoud auth print-identity-token`.
-// Referecne: https://cloud.google.com/sdk/gcloud/reference/auth/print-identity-token.
+// Reference: https://cloud.google.com/sdk/gcloud/reference/auth/print-identity-token.
 func ReadAuthToken(filepath string) (string, error) {
 	token, err := ioutil.ReadFile(filepath)
 	if err != nil {

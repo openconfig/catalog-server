@@ -12,14 +12,14 @@ import (
 
 const (
 	// File name of testdata of mocked response template, server could set queryName inside this response.
-	testdataFile = `testdata`
+	testdataFile = `testdata/testdata`
 	// Name of filed containing raw JSON string of Module in response.
 	rawFieldName = `Data`
 )
 
 // ReadTestData reads testdata from file.
 func ReadTestData(filename string) (string, error) {
-	file, err := os.Open(testdataFile)
+	file, err := os.Open(filename)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %v", err)
@@ -34,7 +34,8 @@ func ReadTestData(filename string) (string, error) {
 
 	// Append testdata line by line.
 	for scanner.Scan() {
-		testdata += scanner.Text()
+		// Trim spaces in each line, otherwise parsing string back to Module struct would fail.
+		testdata += strings.TrimSpace(scanner.Text())
 	}
 	return testdata, nil
 }
