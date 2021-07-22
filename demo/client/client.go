@@ -18,20 +18,20 @@ const (
 
 // Demo program to show how to use client library functions.
 func main() {
-	var tokenPathPtr = flag.String("token", "", "file path of auth token")
+	var tokenPathPtr = flag.String("token", "token", "file path of auth token")
 	flag.Parse()
 
 	// Format whole query URL.
 	queryURL := hostURL + `?query=` + graphQuery
 
-	// Format HTTP query.
-	req, err := client.FormatHTTPQuery(queryURL, *tokenPathPtr)
+	// Initialize a new Client.
+	c, err := client.NewClient(*tokenPathPtr)
 	if err != nil {
-		glog.Fatalf("catalog client: format query failed: %v", err)
+		glog.Fatalf("catalog client: new client failed: %v", err)
 	}
 
 	// Send query to server and receive response.
-	resp, err := client.QueryServer(req)
+	resp, err := c.QueryServer(queryURL)
 	if err != nil {
 		glog.Fatalf("catalog client: query server failed: %v", err)
 	}

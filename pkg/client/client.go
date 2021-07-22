@@ -18,6 +18,26 @@ import (
 // All responses from server are put inside a field called `data` of json string.
 const dataField = "data"
 
+// Client is struct of client containing token string.
+// User should always use `NewClient` to initialize a Client struct.
+type Client struct {
+	token string // token string, this should be initialized
+}
+
+// NewClient returns a new client pointer with filepath of `authentication token`.
+// If filepath is "", then it means no filepath is given, set Client.token to "".
+func NewClient(filepath string) (*Client, error) {
+	token := ""
+	if filepath != "" {
+		var err error
+		token, err = ReadAuthToken(filepath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create a new Client, read token failed: %v", err)
+		}
+	}
+	return &Client{token: token}, nil
+}
+
 // ReadAuthToken takes in *filepath* of token file, reads token and returns token string.
 // This token is used when server is deployed on Google Cloud Run and only avaiable to permitted users.
 // In this case, users need to include a header with identity token to get access to catalog server.
@@ -31,27 +51,18 @@ func ReadAuthToken(filepath string) (string, error) {
 	return string(token), nil
 }
 
-// FormatHTTPQuery generates a HTTP request that can be used to query catalog server.
-// It takes in query string and token's filepath as parameters.
-// Example query looks like: HOST_ADDR/query?query=GRAPHQL_QUERY.
-// If filepath is "", then it means no filepath is given, do not append "Auth" header.
-func FormatHTTPQuery(query string, filepath string) (*http.Request, error) {
+// QueryServer first generates a HTTP request that can be used to query catalog server.
+// It then sends formatted query request (*req*) to catalog server and returns string of body if no errors encountered.
+// It takes in query string, example query looks like: HOST_ADDR/query?query=GRAPHQL_QUERY.
+func (c *Client) QueryServer(query string) (string, error) {
 	req, err := http.NewRequest("GET", query, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Format new HTTP request failed: %v", err)
+		return "", fmt.Errorf("Format new HTTP request failed: %v", err)
 	}
-	if filepath != "" {
-		token, err := ReadAuthToken(filepath)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
+	// if Client's token is "", it means no token is given, do not append header.
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
-	return req, nil
-}
-
-// QueryServer sends formatted query request (*req*) to catalog server and returns string of body if no errors encountered.
-func QueryServer(req *http.Request) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -69,6 +80,7 @@ func QueryServer(req *http.Request) (string, error) {
 }
 
 // ParseModule parses query results into slice of ygot go structs of Module.
+// To use this function, graphQL query should always include raw JSON data field.
 // It takes in three parameters:
 // * resp: query response string in json format.
 // * fieldName: name of filed of json string of Module in response.

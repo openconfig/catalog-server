@@ -97,13 +97,13 @@ func TestQuery(t *testing.T) {
 			wantModuleNames: []string{`0`, `1`, `2`},
 		},
 	}
+	c, err := NewClient("")
+	if err != nil {
+		t.Errorf("NewClient failed: %v", err)
+	}
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("TestQueryServer %s", tc.desc), func(t *testing.T) {
-			req, err := FormatHTTPQuery(ts.URL+"/query?query="+tc.query, "")
-			if err != nil {
-				t.Errorf("Format http query failed: %v", err)
-			}
-			resp, err := QueryServer(req)
+			resp, err := c.QueryServer(ts.URL + "/query?query=" + tc.query)
 			if err != nil {
 				t.Errorf("Send query to server failed: %v", err)
 			}
