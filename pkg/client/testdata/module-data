@@ -1,0 +1,145 @@
+{
+ "data": {
+  "%s": [
+   {
+    "Data":
+    "{
+     \"openconfig-module-catalog:access\": {
+      \"md5-hash\": \"uS\",
+      \"uri\": \"jZ8u\"
+     },
+     \"openconfig-module-catalog:classification\": {
+      \"category\": \"openconfig-catalog-types:IETF_NETWORK_SERVICE\",
+      \"deployment-status\": \"openconfig-catalog-types:EXPERIMENTAL\",
+      \"subcategory\": \"openconfig-catalog-types:IETF_TYPE_USER\"
+     },
+     \"openconfig-module-catalog:dependencies\": {
+      \"required-module\": [
+       \"jJkw\",
+       \"kh\",
+       \"2fhf\"
+      ]
+     },
+     \"openconfig-module-catalog:name\": \"0\",
+     \"openconfig-module-catalog:namespace\": \"pLnfgD\",
+     \"openconfig-module-catalog:prefix\": \"c2W\",
+     \"openconfig-module-catalog:revision\": \"8F\",
+     \"openconfig-module-catalog:submodules\": {
+      \"submodule\": [
+       {
+        \"access\": {
+         \"md5-hash\": \"6H\",
+         \"uri\": \"ZHWUsa\"
+        },
+        \"name\": \"5RxR\"
+       },
+       {
+        \"access\": {
+         \"md5-hash\": \"a2\",
+         \"uri\": \"Z\"
+        },
+        \"name\": \"cHciWv\"
+       },
+       {
+        \"access\": {
+         \"md5-hash\": \"IVUWSP\",
+         \"uri\": \"5AWX3\"
+        },
+        \"name\": \"hV3v\"
+       }
+      ]
+     },
+     \"openconfig-module-catalog:summary\": \"qNfHK\",
+     \"openconfig-module-catalog:version\": \"0\"
+    }"
+   },
+   {
+    "Data":
+    "{
+     \"openconfig-module-catalog:access\": {
+      \"md5-hash\": \"zONJ\",
+      \"uri\": \"Awd\"
+     },
+     \"openconfig-module-catalog:classification\": {
+      \"category\": \"openconfig-catalog-types:IETF_NETWORK_ELEMENT\",
+      \"deployment-status\": \"openconfig-catalog-types:EXPERIMENTAL\",
+      \"subcategory\": \"openconfig-catalog-types:IETF_TYPE_USER\"
+     },
+     \"openconfig-module-catalog:dependencies\": {
+      \"required-module\": [
+       \"1VQKGN\",
+       \"uJE9f\"
+      ]
+     },
+     \"openconfig-module-catalog:name\": \"1\",
+     \"openconfig-module-catalog:namespace\": \"z0Th\",
+     \"openconfig-module-catalog:prefix\": \"XfQ6\",
+     \"openconfig-module-catalog:revision\": \"YS\",
+     \"openconfig-module-catalog:submodules\": {
+      \"submodule\": [
+       {
+        \"access\": {
+         \"md5-hash\": \"yYtq\",
+         \"uri\": \"S\"
+        },
+        \"name\": \"df2\"
+       },
+       {
+        \"access\": {
+         \"md5-hash\": \"Nm\",
+         \"uri\": \"KERsUh\"
+        },
+        \"name\": \"mM8BIa\"
+       }
+      ]
+     },
+     \"openconfig-module-catalog:summary\": \"3\",
+     \"openconfig-module-catalog:version\": \"1\"
+    }"
+   },
+   {
+    "Data":
+    "{
+     \"openconfig-module-catalog:access\": {
+      \"md5-hash\": \"U1W\",
+      \"uri\": \"NeW1gd\"
+     },
+     \"openconfig-module-catalog:classification\": {
+      \"category\": \"openconfig-catalog-types:IETF_MODEL_LAYER\",
+      \"deployment-status\": \"openconfig-catalog-types:PRODUCTION\",
+      \"subcategory\": \"openconfig-catalog-types:IETF_MODEL_TYPE\"
+     },
+     \"openconfig-module-catalog:dependencies\": {
+      \"required-module\": [
+       \"oFgoil\"
+      ]
+     },
+     \"openconfig-module-catalog:name\": \"2\",
+     \"openconfig-module-catalog:namespace\": \"F\",
+     \"openconfig-module-catalog:prefix\": \"U\",
+     \"openconfig-module-catalog:revision\": \"LzXv2\",
+     \"openconfig-module-catalog:submodules\": {
+      \"submodule\": [
+       {
+        \"access\": {
+         \"md5-hash\": \"N8ct\",
+         \"uri\": \"U6U\"
+        },
+        \"name\": \"LFJ84q\"
+       },
+       {
+        \"access\": {
+         \"md5-hash\": \"X\",
+         \"uri\": \"77\"
+        },
+        \"name\": \"VDsEW\"
+       }
+      ]
+     },
+     \"openconfig-module-catalog:summary\": \"cNIr\",
+     \"openconfig-module-catalog:version\": \"2\"
+    }"
+   }
+  ]
+ }
+}
