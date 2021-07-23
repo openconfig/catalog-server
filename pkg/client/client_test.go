@@ -13,8 +13,6 @@ import (
 const (
 	// File name of testdata of mocked response template, server could set queryName inside this response.
 	testdataFile = `testdata/testdata`
-	// Name of filed containing raw JSON string of Module in response.
-	rawFieldName = `Data`
 )
 
 // ReadTestData reads testdata from file.
@@ -107,7 +105,7 @@ func TestQuery(t *testing.T) {
 			if err != nil {
 				t.Errorf("Send query to server failed: %v", err)
 			}
-			modules, err := ParseModule(resp, rawFieldName, tc.queryName)
+			modules, err := ParseModule(resp, tc.queryName)
 			if err != nil {
 				t.Errorf("Parse Module failed: %v", err)
 			}

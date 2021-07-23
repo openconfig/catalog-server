@@ -10,10 +10,9 @@ import (
 
 // const values for demo purposes.
 const (
-	rawFieldName = `Data`                                             // Name of field in response containing json data.
-	hostURL      = `https://helloworld-jpx33sh7ha-uc.a.run.app/query` // Address of deployed server.
-	graphQuery   = `{ModulesByOrgName(OrgName:"1"){Data}}`            // GraphQL query.
-	queryName    = `ModulesByOrgName`                                 // Name of graphQL query.
+	hostURL    = `https://helloworld-jpx33sh7ha-uc.a.run.app/query` // Address of deployed server.
+	graphQuery = `{ModulesByOrgName(OrgName:"1"){Data}}`            // GraphQL query.
+	queryName  = `ModulesByOrgName`                                 // Name of graphQL query.
 )
 
 // Demo program to show how to use client library functions.
@@ -37,7 +36,7 @@ func main() {
 	}
 
 	// Parse query results.
-	modules, err := client.ParseModule(resp, rawFieldName, queryName)
+	modules, err := client.ParseModule(resp, queryName)
 	if err != nil {
 		glog.Fatalf("catalog client: parse response into go catalog modules failed: %v", err)
 	}

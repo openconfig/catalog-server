@@ -15,8 +15,10 @@ import (
 	oc "github.com/openconfig/catalog-server/pkg/ygotgen"
 )
 
-// All responses from server are put inside a field called `data` of json string.
-const dataField = "data"
+const (
+	dataField     = "data" // All responses from server are put inside a field called `data` of json string.
+	JSONFiledName = `Data` // Name of field in response containing json data.
+)
 
 // Client is struct of client containing token string.
 // User should always use `NewClient` to initialize a Client struct.
@@ -81,11 +83,10 @@ func (c *Client) QueryServer(query string) (string, error) {
 
 // ParseModule parses query results into slice of ygot go structs of Module.
 // To use this function, graphQL query should always include raw JSON data field.
-// It takes in three parameters:
+// It takes in two parameters:
 // * resp: query response string in json format.
-// * fieldName: name of filed of json string of Module in response.
 // * queryName: name of query users want to extract response from as GraphQL supports composing multiple queries into one request.
-func ParseModule(resp string, fieldName string, queryName string) ([]oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module, error) {
+func ParseModule(resp string, queryName string) ([]oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module, error) {
 	var moduleMap map[string]interface{}
 	if err := json.Unmarshal([]byte(resp), &moduleMap); err != nil {
 		return nil, fmt.Errorf("Unmarshal response into json failed: %v", err)
@@ -95,8 +96,8 @@ func ParseModule(resp string, fieldName string, queryName string) ([]oc.Openconf
 	dataJSON := moduleMap[dataField].(map[string]interface{})[queryName].([]interface{})
 	var modules []oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module
 	for i := 0; i < len(dataJSON); i++ {
-		// Retrieve json string of Module from *filedName* field.
-		moduleJson := dataJSON[i].(map[string]interface{})[fieldName].(string)
+		// Retrieve json string of Module from *JSONFiledName* field.
+		moduleJson := dataJSON[i].(map[string]interface{})[JSONFiledName].(string)
 		module := &oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module{}
 		if err := oc.Unmarshal([]byte(moduleJson), module); err != nil {
 			return nil, fmt.Errorf("Cannot unmarshal JSON: %v", err)
