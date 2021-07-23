@@ -17,13 +17,13 @@ import (
 
 const (
 	dataField     = "data" // All responses from server are put inside a field called `data` of json string.
-	JSONFiledName = `Data` // Name of field in response containing json data.
+	JSONFieldName = `Data` // Name of field in response containing json data.
 )
 
 // Client is struct of client containing token string.
 // User should always use `NewClient` to initialize a Client struct.
 type Client struct {
-	token string // token string, this should be initialized
+	token string // token string, this should be initialized.
 }
 
 // NewClient returns a new client pointer with filepath of `authentication token`.
@@ -96,8 +96,8 @@ func ParseModule(resp string, queryName string) ([]oc.OpenconfigModuleCatalog_Or
 	dataJSON := moduleMap[dataField].(map[string]interface{})[queryName].([]interface{})
 	var modules []oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module
 	for i := 0; i < len(dataJSON); i++ {
-		// Retrieve json string of Module from *JSONFiledName* field.
-		moduleJson := dataJSON[i].(map[string]interface{})[JSONFiledName].(string)
+		// Retrieve json string of Module from *JSONFieldName* field.
+		moduleJson := dataJSON[i].(map[string]interface{})[JSONFieldName].(string)
 		module := &oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module{}
 		if err := oc.Unmarshal([]byte(moduleJson), module); err != nil {
 			return nil, fmt.Errorf("Cannot unmarshal JSON: %v", err)

@@ -15,7 +15,7 @@ const (
 	testdataFile = `testdata/testdata`
 )
 
-// ReadTestData reads testdata from file.
+// ReadTestData reads testdata from file and strips away invalid "\n" from test file.
 func ReadTestData(filename string) (string, error) {
 	file, err := os.Open(filename)
 
