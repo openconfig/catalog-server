@@ -303,7 +303,7 @@ Formats:
 			Prefix:    &mods[n].Prefix.Name,
 			Summary:   &mods[n].Description.Name,
 		}
-		// if mods[n].YangVersion != nil {
+
 		version, err := yang.MatchingExtensions(mods[n], "openconfig-extensions", "openconfig-version")
 		if err != nil || len(version) == 0 {
 			glog.Infof("%s do not have version\n", mods[n].Name)
@@ -312,6 +312,7 @@ Formats:
 
 		module.Version = &version[0].Argument
 
+		// If there are multiple revisions, we directly use the lastest one.
 		if len(mods[n].Revision) > 0 {
 			module.Revision = &mods[n].Revision[0].Name
 		}
@@ -331,6 +332,7 @@ Formats:
 		moduleURL := urlMap[n]
 		module.GetOrCreateAccess().Uri = &moduleURL
 
+		// Serialize module struct into json for insertion.
 		json, err := ygot.EmitJSON(module, &ygot.EmitJSONConfig{
 			Format: ygot.RFC7951,
 			Indent: "  ",
