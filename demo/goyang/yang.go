@@ -44,13 +44,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"runtime/trace"
 	"sort"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/openconfig/catalog-server/pkg/db"
 	oc "github.com/openconfig/catalog-server/pkg/ygotgen"
 	"github.com/openconfig/goyang/pkg/indent"
@@ -86,19 +86,20 @@ func exitIfError(errs []error) {
 }
 
 const (
-	modelURL     = `https://github.com/openconfig/public/tree/master/release/models`   // modelURL is prefix of github URL that would be appended for modules in `models` directory.
-	modelKeyword = `models`                                                            // We check whether path of found module contains `models` to check whether it's under `models` directory.
-	ietfURL      = `https://github.com/openconfig/public/tree/master/third_party/ietf` // ietfURL is prefix of github URL that would be appended for models in `ietf` directory.
-	ietfKeyword  = `ietf`                                                              // We check whether path of found module contains `ietf` to check whether it's under `ietf` directory.
-	orgName      = `openconfig`                                                        // default orgName that is used when inserting modules into database.
+	modelDir     = `release/models`   // modelDir is directory in openconfig/public github repo that contains modules in `models` directory.
+	modelKeyword = `models`           // We check whether path of found module contains `models` to check whether it's under `models` directory.
+	ietfDir      = `third_party/ietf` // ietfDir is directory in openconfig/public github repo that contains modules in `ietf` directory.
+	ietfKeyword  = `ietf`             // We check whether path of found module contains `ietf` to check whether it's under `ietf` directory.
+	orgName      = `openconfig`       // default orgName that is used when inserting modules into database.
 )
 
 // urlMap is map from model's name to its github URL.
 var urlMap = map[string]string{}
 
 // traverseDir traverses given directory *dir* to find all modules in this directory including its sub-directories.
+// *url* is the url prefix of github repo at certain commit.
 // It returns a slice of names of modules found.
-func traverseDir(dir string) ([]string, error) {
+func traverseDir(dir string, url string) ([]string, error) {
 	dirfiles, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("traverseDir: read files from directory %s failed: %v\n", dir, err)
@@ -126,7 +127,7 @@ func traverseDir(dir string) ([]string, error) {
 			if strings.Contains(fullpath, modelKeyword) {
 				// Modules/submodules under `models` dirctory are under subdirectory (*currDir*) of `models` directory.
 				// Store url of found module/submodule in urlMap.
-				urlMap[name] = modelURL + "/" + currDir + "/" + f.Name()
+				urlMap[name] = url + modelDir + "/" + currDir + "/" + f.Name()
 			} else {
 				// Found modules must be either under `models` directory or `ietf` directory.
 				if !(strings.Contains(fullpath, ietfKeyword)) {
@@ -134,7 +135,7 @@ func traverseDir(dir string) ([]string, error) {
 				}
 				// `ietf` directory does not have subdirectory.
 				// Store url of found module/submodule in urlMap.
-				urlMap[name] = ietfURL + "/" + f.Name()
+				urlMap[name] = url + ietfDir + "/" + f.Name()
 			}
 			scanner := bufio.NewScanner(file)
 			scanner.Split(bufio.ScanLines)
@@ -144,7 +145,7 @@ func traverseDir(dir string) ([]string, error) {
 			if strings.HasPrefix(strings.TrimSpace(scanner.Text()), "module ") {
 				names = append(names, name)
 			} else {
-				glog.Info(fullpath + " does not have modules")
+				log.Println(fullpath + " does not have modules")
 			}
 			file.Close()
 		}
@@ -152,7 +153,7 @@ func traverseDir(dir string) ([]string, error) {
 
 	// Traverse found subdirectories.
 	for _, dirName := range dirs {
-		newnames, err := traverseDir(dir + "/" + dirName)
+		newnames, err := traverseDir(dir+"/"+dirName, url)
 		if err != nil {
 			return nil, err
 		}
@@ -174,10 +175,13 @@ func main() {
 	var traceP string
 	var help bool
 	var paths []string
+	var url string
 	getopt.ListVarLong(&paths, "path", 'p', "comma separated list of directories to add to search path", "DIR[,DIR...]")
 	getopt.StringVarLong(&format, "format", 'f', "format to display: "+strings.Join(formats, ", "), "FORMAT")
 	getopt.StringVarLong(&traceP, "trace", 't', "write trace into to TRACEFILE", "TRACEFILE")
 	getopt.BoolVarLong(&help, "help", 'h', "display help")
+	// *url* is the url prefix of github repo at certain commit that we are crawling modules from.
+	getopt.StringVarLong(&url, "url", 'u', "url of this git commit")
 	getopt.BoolVarLong(&yang.ParseOptions.IgnoreSubmoduleCircularDependencies, "ignore-circdep", 'g', "ignore circular dependencies between submodules")
 	getopt.SetParameters("[FORMAT OPTIONS] [SOURCE] [...]")
 
@@ -256,9 +260,9 @@ Formats:
 	// all modules in these directories and crawl them later.
 	if len(files) == 0 {
 		for _, path := range paths {
-			names, err := traverseDir(path)
+			names, err := traverseDir(path, url)
 			if err != nil {
-				glog.Fatalf("traverse directory %s failed: %v", path, err)
+				log.Fatalf("traverse directory %s failed: %v", path, err)
 			}
 			// Append all found modules into *files*.
 			files = append(files, names...)
@@ -290,7 +294,7 @@ Formats:
 
 	// Connect to DB
 	if err := db.ConnectDB(); err != nil {
-		glog.Fatalf("Connect to db failed: %v", err)
+		log.Fatalf("Connect to db failed: %v", err)
 		stop(1)
 	}
 	defer db.Close()
@@ -306,7 +310,7 @@ Formats:
 
 		version, err := yang.MatchingExtensions(mods[n], "openconfig-extensions", "openconfig-version")
 		if err != nil || len(version) == 0 {
-			glog.Infof("%s do not have version\n", mods[n].Name)
+			log.Printf("%s do not have version\n", mods[n].Name)
 			continue
 		}
 
@@ -323,7 +327,7 @@ Formats:
 			module.GetOrCreateSubmodules().GetOrCreateSubmodule(mods[n].Include[i].Name)
 			submoduleURL := urlMap[mods[n].Include[i].Name]
 			if submoduleURL == "" {
-				glog.Fatalf("cannot find url of submodule: %s", mods[n].Include[i].Name)
+				log.Fatalf("cannot find url of submodule: %s", mods[n].Include[i].Name)
 				continue
 			}
 			module.GetOrCreateSubmodules().GetOrCreateSubmodule(mods[n].Include[i].Name).GetOrCreateAccess().Uri = &submoduleURL
@@ -341,13 +345,15 @@ Formats:
 			},
 		})
 		if err != nil {
-			glog.Fatalf("Marshalling into json string failed\n")
+			log.Fatalf("Marshalling into json string failed\n")
 		}
+		// fmt.Println(json)
 
 		if err := db.InsertModule(orgName, module.GetName(), module.GetVersion(), json); err != nil {
-			glog.Fatalf("Insert module %s failed: %v\n", module.GetName(), err)
-			break
+			log.Printf("Insert module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
+			continue
 		}
+		log.Printf("Insert module succuss, Name: %s, Version: %s\n", module.GetName(), module.GetVersion())
 	}
 
 }
