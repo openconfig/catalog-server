@@ -12,67 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Program yang parses YANG files, displays errors, and possibly writes
-// something related to the input on output.
+// Program yang crawls all modules at certain commit of `https://github.com/openconfig/public`.
+// Usage: yang [--path DIR] [--url URL]
 //
-// Usage: yang [--path DIR] [--format FORMAT] [FORMAT OPTIONS] [MODULE] [FILE ...]
+// DIR is a comma separated list of paths that are appended as the search directory.
+// If DIR appears as DIR/... then DIR and all direct and indirect subdirectories are checked.
 //
-// If MODULE is specified (an argument that does not end in .yang), it is taken
-// as the name of the module to display.  Any FILEs specified are read, and the
-// tree for MODULE is displayed.  If MODULE was not defined in FILEs (or no
-// files were specified), then the file MODULES.yang is read as well.  An error
-// is displayed if no definition for MODULE was found.
-//
-// If MODULE is missing, then all base modules read from the FILEs are
-// displayed.  If there are no arguments then standard input is parsed.
-//
-// If DIR is specified, it is considered a comma separated list of paths
-// to append to the search directory.  If DIR appears as DIR/... then
-// DIR and all direct and indirect subdirectories are checked.
-//
-// FORMAT, which defaults to "tree", specifies the format of output to produce.
-// Use "goyang --help" for a list of available formats.
-//
-// FORMAT OPTIONS are flags that apply to a specific format.  They must follow
-// --format.
-//
+// URL is github URL prefix of git commit that program is crawling.
 // THIS PROGRAM IS STILL JUST A DEVELOPMENT TOOL.
 package main
 
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
-	"runtime/trace"
 	"sort"
 	"strings"
 
 	"github.com/openconfig/catalog-server/pkg/db"
 	oc "github.com/openconfig/catalog-server/pkg/ygotgen"
-	"github.com/openconfig/goyang/pkg/indent"
 	"github.com/openconfig/goyang/pkg/yang"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/pborman/getopt"
 )
-
-// Each format must register a formatter with register.  The function f will
-// be called once with the set of yang Entry trees generated.
-type formatter struct {
-	name  string
-	f     func(io.Writer, []*yang.Entry)
-	help  string
-	flags *getopt.Set
-}
-
-var formatters = map[string]*formatter{}
-
-func register(f *formatter) {
-	formatters[f.name] = f
-}
 
 // exitIfError writes errs to standard error and exits with an exit status of 1.
 // If errs is empty then exitIfError does nothing and simply returns.
@@ -165,39 +130,16 @@ func traverseDir(dir string, url string) ([]string, error) {
 var stop = os.Exit
 
 func main() {
-	var format string
-	formats := make([]string, 0, len(formatters))
-	for k := range formatters {
-		formats = append(formats, k)
-	}
-	sort.Strings(formats)
-
-	var traceP string
 	var help bool
 	var paths []string
 	var url string
 	getopt.ListVarLong(&paths, "path", 'p', "comma separated list of directories to add to search path", "DIR[,DIR...]")
-	getopt.StringVarLong(&format, "format", 'f', "format to display: "+strings.Join(formats, ", "), "FORMAT")
-	getopt.StringVarLong(&traceP, "trace", 't', "write trace into to TRACEFILE", "TRACEFILE")
 	getopt.BoolVarLong(&help, "help", 'h', "display help")
 	// *url* is the url prefix of github repo at certain commit that we are crawling modules from.
-	getopt.StringVarLong(&url, "url", 'u', "url of this git commit")
-	getopt.BoolVarLong(&yang.ParseOptions.IgnoreSubmoduleCircularDependencies, "ignore-circdep", 'g', "ignore circular dependencies between submodules")
-	getopt.SetParameters("[FORMAT OPTIONS] [SOURCE] [...]")
+	getopt.StringVarLong(&url, "url", 'u', "url prefix of git commit that we are crawling")
+	getopt.SetParameters("")
 
 	if err := getopt.Getopt(func(o getopt.Option) bool {
-		if o.Name() == "--format" {
-			f, ok := formatters[format]
-			if !ok {
-				fmt.Fprintf(os.Stderr, "%s: invalid format.  Choices are %s\n", format, strings.Join(formats, ", "))
-				stop(1)
-			}
-			if f.flags != nil {
-				f.flags.VisitAll(func(o getopt.Option) {
-					getopt.AddOption(o)
-				})
-			}
-		}
 		return true
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -205,33 +147,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if traceP != "" {
-		fp, err := os.Create(traceP)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		trace.Start(fp)
-		stop = func(c int) { trace.Stop(); os.Exit(c) }
-		defer func() { trace.Stop() }()
-	}
-
 	if help {
 		getopt.CommandLine.PrintUsage(os.Stderr)
-		fmt.Fprintf(os.Stderr, `
-SOURCE may be a module name or a .yang file.
-
-Formats:
-`)
-		for _, fn := range formats {
-			f := formatters[fn]
-			fmt.Fprintf(os.Stderr, "    %s - %s\n", f.name, f.help)
-			if f.flags != nil {
-				f.flags.PrintOptions(indent.NewWriter(os.Stderr, "   "))
-			}
-			fmt.Fprintln(os.Stderr)
-		}
-		stop(0)
+		os.Exit(0)
 	}
 
 	for _, path := range paths {
@@ -241,14 +159,6 @@ Formats:
 			continue
 		}
 		yang.AddPath(expanded...)
-	}
-
-	if format == "" {
-		format = "tree"
-	}
-	if _, ok := formatters[format]; !ok {
-		fmt.Fprintf(os.Stderr, "%s: invalid format.  Choices are %s\n", format, strings.Join(formats, ", "))
-		stop(1)
 	}
 
 	// files stores names of all modules to search for.
@@ -347,13 +257,12 @@ Formats:
 		if err != nil {
 			log.Fatalf("Marshalling into json string failed\n")
 		}
-		// fmt.Println(json)
 
 		if err := db.InsertModule(orgName, module.GetName(), module.GetVersion(), json); err != nil {
 			log.Printf("Insert module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
 			continue
 		}
-		log.Printf("Insert module succuss, Name: %s, Version: %s\n", module.GetName(), module.GetVersion())
+		log.Printf("Inserting module succeeds, Name: %s, Version: %s\n", module.GetName(), module.GetVersion())
 	}
 
 }
