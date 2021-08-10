@@ -8,3 +8,8 @@ type Module struct {
 	Version string `json:"Version"`
 	Data    string `json:"Data"`
 }
+
+type NewModule struct {
+	OrgName string `json:"OrgName"`
+	Data    string `json:"Data"`
+}

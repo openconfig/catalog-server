@@ -35,6 +35,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
 }
 
@@ -49,12 +50,19 @@ type ComplexityRoot struct {
 		Version func(childComplexity int) int
 	}
 
+	Mutation struct {
+		CreateModule func(childComplexity int, input model.NewModule, token *string) int
+	}
+
 	Query struct {
 		ModulesByKey     func(childComplexity int, name *string, version *string) int
 		ModulesByOrgName func(childComplexity int, orgName *string) int
 	}
 }
 
+type MutationResolver interface {
+	CreateModule(ctx context.Context, input model.NewModule, token *string) (string, error)
+}
 type QueryResolver interface {
 	ModulesByOrgName(ctx context.Context, orgName *string) ([]*model.Module, error)
 	ModulesByKey(ctx context.Context, name *string, version *string) ([]*model.Module, error)
@@ -102,6 +110,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Module.Version(childComplexity), true
+
+	case "Mutation.CreateModule":
+		if e.complexity.Mutation.CreateModule == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_CreateModule_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateModule(childComplexity, args["Input"].(model.NewModule), args["Token"].(*string)), true
 
 	case "Query.ModulesByKey":
 		if e.complexity.Query.ModulesByKey == nil {
@@ -151,6 +171,20 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -187,6 +221,15 @@ var sources = []*ast.Source{
 type Query {
   ModulesByOrgName(OrgName: String): [Module!]!
   ModulesByKey(Name: String, Version: String): [Module!]!
+}
+
+input NewModule {
+  OrgName: String!
+  Data: String!
+}
+
+type Mutation {
+  CreateModule(Input: NewModule!, Token: String): String!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -194,6 +237,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_CreateModule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewModule
+	if tmp, ok := rawArgs["Input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Input"))
+		arg0, err = ec.unmarshalNNewModule2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐNewModule(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Input"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["Token"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Token"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Token"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Query_ModulesByKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -411,6 +478,48 @@ func (ec *executionContext) _Module_Data(ctx context.Context, field graphql.Coll
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_CreateModule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_CreateModule_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateModule(rctx, args["Input"].(model.NewModule), args["Token"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1669,6 +1778,34 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputNewModule(ctx context.Context, obj interface{}) (model.NewModule, error) {
+	var it model.NewModule
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "OrgName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OrgName"))
+			it.OrgName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Data":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Data"))
+			it.Data, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -1705,6 +1842,37 @@ func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "Data":
 			out.Values[i] = ec._Module_Data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "CreateModule":
+			out.Values[i] = ec._Mutation_CreateModule(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2082,6 +2250,11 @@ func (ec *executionContext) marshalNModule2ᚖgithubᚗcomᚋopenconfigᚋcatalo
 		return graphql.Null
 	}
 	return ec._Module(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNNewModule2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐNewModule(ctx context.Context, v interface{}) (model.NewModule, error) {
+	res, err := ec.unmarshalInputNewModule(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
