@@ -21,7 +21,7 @@ import (
 // These are SQL stataments used in this package.
 // Query statements can be appended based on its query parameters.
 const (
-	insertModule  = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4)`
+	insertModule  = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4) on conflict (orgName, name, version) do update set data=$5`
 	selectModules = `select * from modules`
 )
 
@@ -130,10 +130,11 @@ func Close() error {
 }
 
 // InsertModule inserts module into database given values of four field of MODULE schema.
+// Or if there is existing module with conflict key (orgName, name, version), update data field.
 // Error is returned when insertion failed.
 func InsertModule(orgName string, name string, version string, data string) error {
-	if _, err := db.Exec(insertModule, orgName, name, version, data); err != nil {
-		return fmt.Errorf("insert module into db failed: %v", err)
+	if _, err := db.Exec(insertModule, orgName, name, version, data, data); err != nil {
+		return fmt.Errorf("insert/update module into db failed: %v", err)
 	}
 	return nil
 }
