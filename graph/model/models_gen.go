@@ -9,6 +9,12 @@ type Module struct {
 	Data    string `json:"Data"`
 }
 
+type ModuleKey struct {
+	OrgName string `json:"OrgName"`
+	Name    string `json:"Name"`
+	Version string `json:"Version"`
+}
+
 type NewModule struct {
 	OrgName string `json:"OrgName"`
 	Data    string `json:"Data"`
