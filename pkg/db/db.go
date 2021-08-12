@@ -23,6 +23,9 @@ import (
 const (
 	insertModule  = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4) on conflict (orgName, name, version) do update set data=$5`
 	selectModules = `select * from modules`
+	// We want to ensure that user has to provide all three inputs,
+	// instead of deleting too many modules by mistake with some fields missing.
+	deleteModule = `delete from modules where orgName = $1 and name = $2 and version = $3`
 )
 
 // db is the global variable of connection to database.
@@ -225,4 +228,24 @@ func QueryModulesByKey(name *string, version *string) ([]Module, error) {
 	defer rows.Close()
 
 	return ReadModulesByRow(rows)
+}
+
+// DeleteModule takes three pointer of string, orgName, name, version,
+// whose combination is key of one Module in DB's Module table.
+// If deletion fails, an non-nil error is returned.
+func DeleteModule(orgName string, name string, version string) error {
+	result, err := db.Exec(deleteModule, orgName, name, version)
+	if err != nil {
+		return fmt.Errorf("DeleteModule failed: %v", err)
+	}
+	num, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("DeleteModule, access rows afffected in result failed: %v", err)
+	}
+	// delete should only affect one row
+	if num != 1 {
+		return fmt.Errorf("DeleteModule: affected row is not one, it affects %d rows", num)
+	}
+
+	return nil
 }

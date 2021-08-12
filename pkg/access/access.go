@@ -55,3 +55,30 @@ func ParseAccess(token string) ([]string, error) {
 	allowOrgs := strings.Split(allowClaims.(string), delimiter)
 	return allowOrgs, nil
 }
+
+// This function takes input of a pointer to token and a string of organization's name.
+// It checks whether the given token in valid and whether it contains access for write operation to *orgName*.
+// If not, an error is returned.
+func CheckAccess(token string, orgName string) error {
+	// Validate token
+	allowOrgs, err := ParseAccess(token)
+	if err != nil {
+		return fmt.Errorf("CheckAccess: user does not provide valid token: %v", err)
+	}
+
+	// Check whether this account has access to such orgnization.
+	hasAccess := false
+	for _, allowOrg := range allowOrgs {
+		if allowOrg == orgName {
+			hasAccess = true
+			break
+		}
+	}
+
+	// If the token does not contain access to input.OrgName, return an error.
+	if !hasAccess {
+		return fmt.Errorf("CheckAccess: user does not have acccess to organization %s", orgName)
+	}
+
+	return nil
+}

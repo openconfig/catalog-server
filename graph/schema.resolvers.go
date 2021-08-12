@@ -15,31 +15,13 @@ import (
 	"github.com/openconfig/catalog-server/pkg/validate"
 )
 
-func (r *mutationResolver) CreateModule(ctx context.Context, input model.NewModule, token *string) (string, error) {
+func (r *mutationResolver) CreateModule(ctx context.Context, input model.NewModule, token string) (string, error) {
 	failMsg := `Fail`
 	successMsg := `Success`
-	if token == nil {
-		return failMsg, fmt.Errorf("CreateModule: mutation operation must include a valid token")
-	}
 
-	// Validate token
-	allowOrgs, err := access.ParseAccess(*token)
-	if err != nil {
-		return failMsg, fmt.Errorf("CreateModule: user does not provide valid token: %v", err)
-	}
-
-	// Check whether this account has access to such orgnization.
-	hasAccess := false
-	for _, allowOrg := range allowOrgs {
-		if allowOrg == input.OrgName {
-			hasAccess = true
-			break
-		}
-	}
-
-	// If the token does not contain access to input.OrgName, return an error.
-	if !hasAccess {
-		return failMsg, fmt.Errorf("CreateModule: user does not have acccess to organization %s", input.OrgName)
+	// Validate the token and check whether it contains access to certain organization
+	if err := access.CheckAccess(token, input.OrgName); err != nil {
+		return failMsg, fmt.Errorf("CreateModule: validate token failed: %v", err)
 	}
 
 	// Validate module
@@ -51,6 +33,23 @@ func (r *mutationResolver) CreateModule(ctx context.Context, input model.NewModu
 	// Insert module if not exist, or update it.
 	if err := db.InsertModule(input.OrgName, module.GetName(), module.GetVersion(), input.Data); err != nil {
 		return failMsg, fmt.Errorf("CreateModule failed: %v", err)
+	}
+
+	return successMsg, nil
+}
+
+func (r *mutationResolver) DeleteModule(ctx context.Context, input model.ModuleKey, token string) (string, error) {
+	failMsg := `Fail`
+	successMsg := `Success`
+
+	// Validate the token and check whether it contains access to certain organization
+	if err := access.CheckAccess(token, input.OrgName); err != nil {
+		return failMsg, fmt.Errorf("DeleteModule: validate token failed: %v", err)
+	}
+
+	// Delete a module
+	if err := db.DeleteModule(input.OrgName, input.Name, input.Version); err != nil {
+		return failMsg, fmt.Errorf("DeleteModule failed: %v", err)
 	}
 
 	return successMsg, nil
