@@ -362,3 +362,95 @@ func TestQueryModulesByKey(t *testing.T) {
 		t.Errorf("drop table failed, err: %v", err)
 	}
 }
+
+func TestDeleteModule(t *testing.T) {
+	inputs := []struct {
+		orgName string
+		name    string
+		version string
+		data    string
+	}{
+		{
+			orgName: "test",
+			name:    "1",
+			version: "1",
+			data:    "{}",
+		},
+		{
+			orgName: "test",
+			name:    "1",
+			version: "2",
+			data:    "{}",
+		},
+		{
+			orgName: "newtest",
+			name:    "1",
+			version: "1",
+			data:    "{}",
+		},
+	}
+
+	tests := []struct {
+		orgName string
+		name    string
+		version string
+		wantErr bool
+	}{
+		{
+			orgName: "test",
+			name:    "1",
+			version: "1",
+			wantErr: false,
+		},
+		{
+			orgName: "test",
+			name:    "1",
+			version: "1",
+			wantErr: true,
+		},
+		{
+			orgName: "test",
+			name:    "1",
+			version: "0",
+			wantErr: true,
+		},
+		{
+			orgName: "test",
+			name:    "1",
+			version: "2",
+			wantErr: false,
+		},
+		{
+			orgName: "newtest",
+			name:    "1",
+			version: "1",
+			wantErr: false,
+		},
+	}
+
+	err := ConnectDB()
+	if err != nil {
+		t.Errorf("connect to db failed: %v", err)
+	}
+	defer Close()
+	if err := CreateModuleTable(); err != nil {
+		t.Errorf("create table failed: %v", err)
+	}
+
+	for i := 0; i < len(inputs); i++ {
+		err := InsertModule(inputs[i].orgName, inputs[i].name, inputs[i].version, inputs[i].data)
+		if err != nil {
+			t.Errorf("pre insertion before query test failed: %v", err)
+		}
+	}
+
+	for _, tc := range tests {
+		if err := DeleteModule(tc.orgName, tc.name, tc.version); (err != nil) != tc.wantErr {
+			t.Errorf("DeleteModule test failed: to delete, orgName: %s, name: %s, version: %s, wantErr: %t", tc.orgName, tc.name, tc.version, tc.wantErr)
+		}
+	}
+
+	if err := DropModuleTable(); err != nil {
+		t.Errorf("drop table failed, err: %v", err)
+	}
+}
