@@ -21,11 +21,11 @@ const (
 	dropModuleTable = `drop table modules`
 )
 
-// CreateModuleTable is helper function to create module table in test database.
-func CreateModuleTable() error {
+// CreateTestModuleTable is helper function to create module table in test database.
+func CreateTestModuleTable() error {
 	_, err := db.Exec(createModuleTable)
 	if err != nil {
-		return fmt.Errorf("testCreateModuleTable: failed to create testing Module table: %v", err)
+		return fmt.Errorf("testCreateTestModuleTable: failed to create testing Module table: %v", err)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func TestInsertModule(t *testing.T) {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	if err := CreateModuleTable(); err != nil {
+	if err := CreateTestModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 	for _, tc := range tests {
@@ -170,7 +170,7 @@ func TestQueryModulesByOrgName(t *testing.T) {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	if err := CreateModuleTable(); err != nil {
+	if err := CreateTestModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 	for i := 0; i < len(inputs.names); i++ {
@@ -328,7 +328,7 @@ func TestQueryModulesByKey(t *testing.T) {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	if err := CreateModuleTable(); err != nil {
+	if err := CreateTestModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 	for i := 0; i < len(inputs.names); i++ {
@@ -378,14 +378,14 @@ func TestDeleteModule(t *testing.T) {
 		},
 		{
 			orgName: "test",
-			name:    "1",
+			name:    "2",
 			version: "2",
 			data:    "{}",
 		},
 		{
 			orgName: "newtest",
-			name:    "1",
-			version: "1",
+			name:    "3",
+			version: "3",
 			data:    "{}",
 		},
 	}
@@ -416,14 +416,14 @@ func TestDeleteModule(t *testing.T) {
 		},
 		{
 			orgName: "test",
-			name:    "1",
+			name:    "2",
 			version: "2",
 			wantErr: false,
 		},
 		{
 			orgName: "newtest",
-			name:    "1",
-			version: "1",
+			name:    "3",
+			version: "3",
 			wantErr: false,
 		},
 	}
@@ -433,7 +433,7 @@ func TestDeleteModule(t *testing.T) {
 		t.Errorf("connect to db failed: %v", err)
 	}
 	defer Close()
-	if err := CreateModuleTable(); err != nil {
+	if err := CreateTestModuleTable(); err != nil {
 		t.Errorf("create table failed: %v", err)
 	}
 
@@ -447,6 +447,16 @@ func TestDeleteModule(t *testing.T) {
 	for _, tc := range tests {
 		if err := DeleteModule(tc.orgName, tc.name, tc.version); (err != nil) != tc.wantErr {
 			t.Errorf("DeleteModule test failed: to delete, orgName: %s, name: %s, version: %s, wantErr: %t", tc.orgName, tc.name, tc.version, tc.wantErr)
+		}
+		// check whether after deletion, the module still exists or not.
+		if !tc.wantErr {
+			models, err := QueryModulesByKey(&tc.name, &tc.version)
+			if err != nil {
+				t.Errorf("DeleteModule, query after deleting encountered error: %v", err)
+			}
+			if len(models) != 0 {
+				t.Errorf("DeleteModule, after deletion module still exists, orgName: %s, name: %s, version: %s", tc.orgName, tc.name, tc.version)
+			}
 		}
 	}
 
