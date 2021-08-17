@@ -13,7 +13,7 @@ import (
 
 // ValidateModule is used to validate whether the input JSON data is in correct format.
 // It takes a JSON string *data*, and returns a pointer to Module if *data* is in correct format.
-// Otherwise, the fucntion returns an error explaining why validation fails.
+// Otherwise, the function returns an error explaining why validation fails.
 func ValidateModule(data string) (*oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module, error) {
 	module := &oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module{}
 

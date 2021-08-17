@@ -1,5 +1,5 @@
 /*
-Package access contains function to validate token and parse access
+Package access contains function to validate token and parse access from a valid token
   for write operations (i.e., create and update).
 */
 package access
@@ -12,10 +12,11 @@ import (
 	firebase "firebase.google.com/go/v4"
 )
 
-// const variables related to validate token.
+// const variables related to token validation.
 // *projectID* is the id of project where the server is running in Google Cloud Platform.
 // *delimiter* is delimiter for claim string of a list of names of organizations that the token owner has access to.
 // *accessField* is field name of claim that contains the list of names of organizations that one has access to.
+// Note that organization's names should not contain delimiter.
 const (
 	projectID   = `disco-idea-817`
 	delimiter   = `,`
@@ -23,8 +24,8 @@ const (
 )
 
 // ParseAcess takes input of a token string.
-// It first valides whether the token is valid using firebase,
-// then parse a list of names for organization that token owner has access to from the token.
+// It first validates whether the token is valid using firebase,
+// then parses from the token's claims a list organization names to which that the token owner has write access.
 // If token is invalid, an error is returned.
 func ParseAccess(token string) ([]string, error) {
 	// Set up firebase configuration to use correct token validation method.
@@ -39,7 +40,7 @@ func ParseAccess(token string) ([]string, error) {
 		return nil, fmt.Errorf("ParseAccess: generate firebase authentication admin failed")
 	}
 
-	// Use firebase to valide token
+	// Use firebase to validate token
 	verifiedToken, err := client.VerifyIDToken(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("ParseAccess: error verifying ID token: %v\n", err)
@@ -56,7 +57,7 @@ func ParseAccess(token string) ([]string, error) {
 	return allowOrgs, nil
 }
 
-// This function takes input of a pointer to token and a string of organization's name.
+// This function takes input of a string of token and a string of organization's name.
 // It checks whether the given token in valid and whether it contains access for write operation to *orgName*.
 // If not, an error is returned.
 func CheckAccess(token string, orgName string) error {
@@ -77,7 +78,7 @@ func CheckAccess(token string, orgName string) error {
 
 	// If the token does not contain access to input.OrgName, return an error.
 	if !hasAccess {
-		return fmt.Errorf("CheckAccess: user does not have acccess to organization %s", orgName)
+		return fmt.Errorf("CheckAccess: user does not have access to organization %s", orgName)
 	}
 
 	return nil
