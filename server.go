@@ -34,6 +34,15 @@ func main() {
 	// Set handler for all queries.
 	http.Handle("/query", srv)
 
+	// static file server to serve frontend webpages.
+	fileServer := http.FileServer(http.Dir("frontend"))
+	http.HandleFunc(
+		"/static/",
+		func(w http.ResponseWriter, r *http.Request) {
+			fileServer.ServeHTTP(w, r)
+		},
+	)
+
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

@@ -21,8 +21,12 @@ import (
 // These are SQL stataments used in this package.
 // Query statements can be appended based on its query parameters.
 const (
-	insertModule  = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4)`
+	// $4 and $5 should be assigned with the same value (the JSON data of module).
+	insertModule  = `INSERT INTO modules (orgName, name, version, data) VALUES($1, $2, $3, $4) on conflict (orgName, name, version) do update set data=$5`
 	selectModules = `select * from modules`
+	// We want to ensure that user has to provide all three inputs,
+	// instead of deleting too many modules by mistake with some fields missing.
+	deleteModule = `delete from modules where orgName = $1 and name = $2 and version = $3`
 )
 
 // db is the global variable of connection to database.
@@ -130,10 +134,11 @@ func Close() error {
 }
 
 // InsertModule inserts module into database given values of four field of MODULE schema.
+// Or if there is existing module with existing key (orgName, name, version), update data field.
 // Error is returned when insertion failed.
 func InsertModule(orgName string, name string, version string, data string) error {
-	if _, err := db.Exec(insertModule, orgName, name, version, data); err != nil {
-		return fmt.Errorf("insert module into db failed: %v", err)
+	if _, err := db.Exec(insertModule, orgName, name, version, data, data); err != nil {
+		return fmt.Errorf("insert/update module into db failed: %v", err)
 	}
 	return nil
 }
@@ -224,4 +229,25 @@ func QueryModulesByKey(name *string, version *string) ([]Module, error) {
 	defer rows.Close()
 
 	return ReadModulesByRow(rows)
+}
+
+// DeleteModule takes three string, orgName, name, version,
+// whose combination is key of one Module in DB's Module table.
+// If deletion fails, an non-nil error is returned.
+// If the number of rows affected by this deletion is not 1, an error is also returned.
+func DeleteModule(orgName string, name string, version string) error {
+	result, err := db.Exec(deleteModule, orgName, name, version)
+	if err != nil {
+		return fmt.Errorf("DeleteModule failed: %v", err)
+	}
+	num, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("DeleteModule, access rows afffected in result failed: %v", err)
+	}
+	// delete should only affect one row
+	if num != 1 {
+		return fmt.Errorf("DeleteModule: affected row is not one, it affects %d rows", num)
+	}
+
+	return nil
 }

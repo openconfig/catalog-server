@@ -9,3 +9,19 @@ type Query {
   ModulesByOrgName(OrgName: String): [Module!]!
   ModulesByKey(Name: String, Version: String): [Module!]!
 }
+
+input NewModule {
+  OrgName: String!
+  Data: String!
+}
+
+input ModuleKey {
+  OrgName: String!
+  Name: String!
+  Version: String!
+}
+
+type Mutation {
+  CreateModule(Input: NewModule!, Token: String!): String!
+  DeleteModule(Input: ModuleKey!, Token: String!): String!
+}
