@@ -7,6 +7,7 @@ package access
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	firebase "firebase.google.com/go/v4"
@@ -18,10 +19,19 @@ import (
 // *accessField* is field name of claim that contains the list of names of organizations that one has access to.
 // Note that organization's names should not contain delimiter.
 const (
-	projectID   = `disco-idea-817`
-	delimiter   = `,`
-	accessField = `allow`
+	projectID       = `disco-idea-817`
+	delimiter       = `,`
+	baseAccessField = `allow`
 )
+
+func GetAccessField() (string, error) {
+	// name of target database
+	dbname, ok := os.LookupEnv("DB_NAME")
+	if !ok {
+		return "", fmt.Errorf("DB_NAME not set")
+	}
+	return (dbname + "-" + baseAccessField), nil
+}
 
 // ParseAcess takes input of a token string.
 // It first validates whether the token is valid using firebase,
@@ -44,6 +54,11 @@ func ParseAccess(token string) ([]string, error) {
 	verifiedToken, err := client.VerifyIDToken(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("ParseAccess: error verifying ID token: %v\n", err)
+	}
+
+	accessField, err := GetAccessField()
+	if err != nil {
+		return nil, fmt.Errorf("ParseAccess: get access field failed: %v", err)
 	}
 
 	// Retrieve *accessField* from claims, if the field does not exist, return an error.

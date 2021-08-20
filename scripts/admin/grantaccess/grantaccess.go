@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	projectID   = `disco-idea-817`
-	accessField = `allow`
+	projectID       = `disco-idea-817`
+	baseAccessField = `allow`
 )
 
 func main() {
@@ -21,11 +21,16 @@ func main() {
 	var emailPtr = flag.String("email", "", "email account that you want to change access for")
 	var accessPtr = flag.String("access", "", "string of a list of organizations that account would be granted access to, seperated by delimiter. If not set, it means set empty access for this account")
 	var listall = flag.Bool("all", false, "whether to list all current users' claims")
+	var dbnamePtr = flag.String("db", "", "name of db that you want to grant user access to")
 
 	flag.Parse()
 
 	if *keyPathPtr == "" {
 		log.Fatalf("Please provide path to key file\n")
+	}
+
+	if *dbnamePtr == "" {
+		log.Fatalf("Please provide db name\n")
 	}
 
 	if *listall == false && *emailPtr == "" {
@@ -46,6 +51,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Generate firebase authentication admin failed\n")
 	}
+
+	accessField := *dbnamePtr + "-" + baseAccessField
 
 	// list all existing users and their claims
 	if *listall {
