@@ -147,11 +147,12 @@ func InsertModule(orgName string, name string, version string, data string) erro
 	return nil
 }
 
-// ReadModulesByRow scans from queried modules from rows one by one, rows are *not* closed inside.
+// ReadModulesByRow scans from queried modules from rows one by one, rows are closed inside.
 // Return slice of db Module struct each field of which corresponds to one column in db.
 // Error is returned when scan rows failed.
 func ReadModulesByRow(rows *sql.Rows) ([]Module, error) {
 	var modules []Module
+	defer rows.Close()
 	for rows.Next() {
 		var module Module
 		if err := rows.Scan(&module.OrgName, &module.Name, &module.Version, &module.Data); err != nil {
@@ -256,11 +257,12 @@ func DeleteModule(orgName string, name string, version string) error {
 	return nil
 }
 
-// ReadFeatureBundlesByRow scans from queried FeatureBundles from rows one by one, rows are *not* closed inside.
+// ReadFeatureBundlesByRow scans from queried FeatureBundles from rows one by one, rows are closed inside.
 // Return slice of db FeatureBundle struct each field of which corresponds to one column in db.
 // Error is returned when scan rows failed.
 func ReadFeatureBundlesByRow(rows *sql.Rows) ([]FeatureBundle, error) {
 	var featureBundles []FeatureBundle
+	defer rows.Close()
 	for rows.Next() {
 		var featureBundle FeatureBundle
 		if err := rows.Scan(&featureBundle.OrgName, &featureBundle.Name, &featureBundle.Version, &featureBundle.Data); err != nil {
@@ -291,8 +293,6 @@ func QueryFeatureBundlesByOrgName(orgName *string) ([]FeatureBundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("QueryFeatureBundlesByOrgName failed: %v", err)
 	}
-
-	defer rows.Close()
 
 	return ReadFeatureBundlesByRow(rows)
 }
@@ -353,8 +353,6 @@ func QueryFeatureBundlesByKey(name *string, version *string) ([]FeatureBundle, e
 	if err != nil {
 		return nil, fmt.Errorf("QueryFeatureBundlesByKey failed: %v", err)
 	}
-
-	defer rows.Close()
 
 	return ReadFeatureBundlesByRow(rows)
 }
