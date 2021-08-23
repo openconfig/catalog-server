@@ -43,31 +43,47 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Module struct {
+	FeatureBundle struct {
 		Data    func(childComplexity int) int
 		Name    func(childComplexity int) int
 		OrgName func(childComplexity int) int
 		Version func(childComplexity int) int
 	}
 
+	Module struct {
+		Data    func(childComplexity int) int
+		Name    func(childComplexity int) int
+		OrgName func(childComplexity int) int
+		URL     func(childComplexity int) int
+		Version func(childComplexity int) int
+	}
+
 	Mutation struct {
-		CreateModule func(childComplexity int, input model.NewModule, token string) int
-		DeleteModule func(childComplexity int, input model.ModuleKey, token string) int
+		CreateFeatureBundle func(childComplexity int, input model.NewFeatureBundle, token string) int
+		CreateModule        func(childComplexity int, input model.NewModule, token string) int
+		DeleteFeatureBundle func(childComplexity int, input model.FeatureBundleKey, token string) int
+		DeleteModule        func(childComplexity int, input model.ModuleKey, token string) int
 	}
 
 	Query struct {
-		ModulesByKey     func(childComplexity int, name *string, version *string) int
-		ModulesByOrgName func(childComplexity int, orgName *string) int
+		FeatureBundlesByKey     func(childComplexity int, name *string, version *string) int
+		FeatureBundlesByOrgName func(childComplexity int, orgName *string) int
+		ModulesByKey            func(childComplexity int, name *string, version *string) int
+		ModulesByOrgName        func(childComplexity int, orgName *string) int
 	}
 }
 
 type MutationResolver interface {
 	CreateModule(ctx context.Context, input model.NewModule, token string) (string, error)
 	DeleteModule(ctx context.Context, input model.ModuleKey, token string) (string, error)
+	CreateFeatureBundle(ctx context.Context, input model.NewFeatureBundle, token string) (string, error)
+	DeleteFeatureBundle(ctx context.Context, input model.FeatureBundleKey, token string) (string, error)
 }
 type QueryResolver interface {
 	ModulesByOrgName(ctx context.Context, orgName *string) ([]*model.Module, error)
 	ModulesByKey(ctx context.Context, name *string, version *string) ([]*model.Module, error)
+	FeatureBundlesByOrgName(ctx context.Context, orgName *string) ([]*model.FeatureBundle, error)
+	FeatureBundlesByKey(ctx context.Context, name *string, version *string) ([]*model.FeatureBundle, error)
 }
 
 type executableSchema struct {
@@ -84,6 +100,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "FeatureBundle.Data":
+		if e.complexity.FeatureBundle.Data == nil {
+			break
+		}
+
+		return e.complexity.FeatureBundle.Data(childComplexity), true
+
+	case "FeatureBundle.Name":
+		if e.complexity.FeatureBundle.Name == nil {
+			break
+		}
+
+		return e.complexity.FeatureBundle.Name(childComplexity), true
+
+	case "FeatureBundle.OrgName":
+		if e.complexity.FeatureBundle.OrgName == nil {
+			break
+		}
+
+		return e.complexity.FeatureBundle.OrgName(childComplexity), true
+
+	case "FeatureBundle.Version":
+		if e.complexity.FeatureBundle.Version == nil {
+			break
+		}
+
+		return e.complexity.FeatureBundle.Version(childComplexity), true
 
 	case "Module.Data":
 		if e.complexity.Module.Data == nil {
@@ -106,12 +150,31 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Module.OrgName(childComplexity), true
 
+	case "Module.URL":
+		if e.complexity.Module.URL == nil {
+			break
+		}
+
+		return e.complexity.Module.URL(childComplexity), true
+
 	case "Module.Version":
 		if e.complexity.Module.Version == nil {
 			break
 		}
 
 		return e.complexity.Module.Version(childComplexity), true
+
+	case "Mutation.CreateFeatureBundle":
+		if e.complexity.Mutation.CreateFeatureBundle == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_CreateFeatureBundle_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateFeatureBundle(childComplexity, args["Input"].(model.NewFeatureBundle), args["Token"].(string)), true
 
 	case "Mutation.CreateModule":
 		if e.complexity.Mutation.CreateModule == nil {
@@ -125,6 +188,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateModule(childComplexity, args["Input"].(model.NewModule), args["Token"].(string)), true
 
+	case "Mutation.DeleteFeatureBundle":
+		if e.complexity.Mutation.DeleteFeatureBundle == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_DeleteFeatureBundle_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteFeatureBundle(childComplexity, args["Input"].(model.FeatureBundleKey), args["Token"].(string)), true
+
 	case "Mutation.DeleteModule":
 		if e.complexity.Mutation.DeleteModule == nil {
 			break
@@ -136,6 +211,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteModule(childComplexity, args["Input"].(model.ModuleKey), args["Token"].(string)), true
+
+	case "Query.FeatureBundlesByKey":
+		if e.complexity.Query.FeatureBundlesByKey == nil {
+			break
+		}
+
+		args, err := ec.field_Query_FeatureBundlesByKey_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeatureBundlesByKey(childComplexity, args["Name"].(*string), args["Version"].(*string)), true
+
+	case "Query.FeatureBundlesByOrgName":
+		if e.complexity.Query.FeatureBundlesByOrgName == nil {
+			break
+		}
+
+		args, err := ec.field_Query_FeatureBundlesByOrgName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FeatureBundlesByOrgName(childComplexity, args["OrgName"].(*string)), true
 
 	case "Query.ModulesByKey":
 		if e.complexity.Query.ModulesByKey == nil {
@@ -229,12 +328,22 @@ var sources = []*ast.Source{
   OrgName: String!
   Name: String!
   Version: String!
+  URL: String!
+  Data: String!
+}
+
+type FeatureBundle {
+  OrgName: String!
+  Name: String!
+  Version: String!
   Data: String!
 }
 
 type Query {
   ModulesByOrgName(OrgName: String): [Module!]!
   ModulesByKey(Name: String, Version: String): [Module!]!
+  FeatureBundlesByOrgName(OrgName: String): [FeatureBundle!]!
+  FeatureBundlesByKey(Name: String, Version: String): [FeatureBundle!]!
 }
 
 input NewModule {
@@ -248,9 +357,22 @@ input ModuleKey {
   Version: String!
 }
 
+input NewFeatureBundle {
+  OrgName: String!
+  Data: String!
+}
+
+input FeatureBundleKey {
+  OrgName: String!
+  Name: String!
+  Version: String!
+}
+
 type Mutation {
   CreateModule(Input: NewModule!, Token: String!): String!
   DeleteModule(Input: ModuleKey!, Token: String!): String!
+  CreateFeatureBundle(Input: NewFeatureBundle!, Token: String!): String!
+  DeleteFeatureBundle(Input: FeatureBundleKey!, Token: String!): String!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -259,6 +381,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_CreateFeatureBundle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewFeatureBundle
+	if tmp, ok := rawArgs["Input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Input"))
+		arg0, err = ec.unmarshalNNewFeatureBundle2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐNewFeatureBundle(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Input"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["Token"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Token"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Token"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_CreateModule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -266,6 +412,30 @@ func (ec *executionContext) field_Mutation_CreateModule_args(ctx context.Context
 	if tmp, ok := rawArgs["Input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Input"))
 		arg0, err = ec.unmarshalNNewModule2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐNewModule(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Input"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["Token"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Token"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Token"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_DeleteFeatureBundle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.FeatureBundleKey
+	if tmp, ok := rawArgs["Input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Input"))
+		arg0, err = ec.unmarshalNFeatureBundleKey2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundleKey(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -304,6 +474,45 @@ func (ec *executionContext) field_Mutation_DeleteModule_args(ctx context.Context
 		}
 	}
 	args["Token"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_FeatureBundlesByKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["Name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Name"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["Version"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Version"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["Version"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_FeatureBundlesByOrgName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["OrgName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OrgName"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["OrgName"] = arg0
 	return args, nil
 }
 
@@ -399,6 +608,146 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _FeatureBundle_OrgName(ctx context.Context, field graphql.CollectedField, obj *model.FeatureBundle) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "FeatureBundle",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OrgName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _FeatureBundle_Name(ctx context.Context, field graphql.CollectedField, obj *model.FeatureBundle) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "FeatureBundle",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _FeatureBundle_Version(ctx context.Context, field graphql.CollectedField, obj *model.FeatureBundle) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "FeatureBundle",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _FeatureBundle_Data(ctx context.Context, field graphql.CollectedField, obj *model.FeatureBundle) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "FeatureBundle",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Module_OrgName(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -488,6 +837,41 @@ func (ec *executionContext) _Module_Version(ctx context.Context, field graphql.C
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Module_URL(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -623,6 +1007,90 @@ func (ec *executionContext) _Mutation_DeleteModule(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_CreateFeatureBundle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_CreateFeatureBundle_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateFeatureBundle(rctx, args["Input"].(model.NewFeatureBundle), args["Token"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_DeleteFeatureBundle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_DeleteFeatureBundle_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteFeatureBundle(rctx, args["Input"].(model.FeatureBundleKey), args["Token"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_ModulesByOrgName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -705,6 +1173,90 @@ func (ec *executionContext) _Query_ModulesByKey(ctx context.Context, field graph
 	res := resTmp.([]*model.Module)
 	fc.Result = res
 	return ec.marshalNModule2ᚕᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐModuleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_FeatureBundlesByOrgName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_FeatureBundlesByOrgName_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeatureBundlesByOrgName(rctx, args["OrgName"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.FeatureBundle)
+	fc.Result = res
+	return ec.marshalNFeatureBundle2ᚕᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_FeatureBundlesByKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_FeatureBundlesByKey_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FeatureBundlesByKey(rctx, args["Name"].(*string), args["Version"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.FeatureBundle)
+	fc.Result = res
+	return ec.marshalNFeatureBundle2ᚕᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1865,6 +2417,42 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputFeatureBundleKey(ctx context.Context, obj interface{}) (model.FeatureBundleKey, error) {
+	var it model.FeatureBundleKey
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "OrgName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OrgName"))
+			it.OrgName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Version":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Version"))
+			it.Version, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputModuleKey(ctx context.Context, obj interface{}) (model.ModuleKey, error) {
 	var it model.ModuleKey
 	var asMap = obj.(map[string]interface{})
@@ -1892,6 +2480,34 @@ func (ec *executionContext) unmarshalInputModuleKey(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Version"))
 			it.Version, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNewFeatureBundle(ctx context.Context, obj interface{}) (model.NewFeatureBundle, error) {
+	var it model.NewFeatureBundle
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "OrgName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OrgName"))
+			it.OrgName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Data":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Data"))
+			it.Data, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -1937,6 +2553,48 @@ func (ec *executionContext) unmarshalInputNewModule(ctx context.Context, obj int
 
 // region    **************************** object.gotpl ****************************
 
+var featureBundleImplementors = []string{"FeatureBundle"}
+
+func (ec *executionContext) _FeatureBundle(ctx context.Context, sel ast.SelectionSet, obj *model.FeatureBundle) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, featureBundleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FeatureBundle")
+		case "OrgName":
+			out.Values[i] = ec._FeatureBundle_OrgName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Name":
+			out.Values[i] = ec._FeatureBundle_Name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Version":
+			out.Values[i] = ec._FeatureBundle_Version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Data":
+			out.Values[i] = ec._FeatureBundle_Data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var moduleImplementors = []string{"Module"}
 
 func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, obj *model.Module) graphql.Marshaler {
@@ -1960,6 +2618,11 @@ func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "Version":
 			out.Values[i] = ec._Module_Version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "URL":
+			out.Values[i] = ec._Module_URL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2001,6 +2664,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "DeleteModule":
 			out.Values[i] = ec._Mutation_DeleteModule(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "CreateFeatureBundle":
+			out.Values[i] = ec._Mutation_CreateFeatureBundle(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "DeleteFeatureBundle":
+			out.Values[i] = ec._Mutation_DeleteFeatureBundle(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2053,6 +2726,34 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_ModulesByKey(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "FeatureBundlesByOrgName":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_FeatureBundlesByOrgName(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "FeatureBundlesByKey":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_FeatureBundlesByKey(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2333,6 +3034,58 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNFeatureBundle2ᚕᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FeatureBundle) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNFeatureBundle2ᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundle(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNFeatureBundle2ᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundle(ctx context.Context, sel ast.SelectionSet, v *model.FeatureBundle) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._FeatureBundle(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFeatureBundleKey2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐFeatureBundleKey(ctx context.Context, v interface{}) (model.FeatureBundleKey, error) {
+	res, err := ec.unmarshalInputFeatureBundleKey(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNModule2ᚕᚖgithubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐModuleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Module) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -2382,6 +3135,11 @@ func (ec *executionContext) marshalNModule2ᚖgithubᚗcomᚋopenconfigᚋcatalo
 
 func (ec *executionContext) unmarshalNModuleKey2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐModuleKey(ctx context.Context, v interface{}) (model.ModuleKey, error) {
 	res, err := ec.unmarshalInputModuleKey(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewFeatureBundle2githubᚗcomᚋopenconfigᚋcatalogᚑserverᚋgraphᚋmodelᚐNewFeatureBundle(ctx context.Context, v interface{}) (model.NewFeatureBundle, error) {
+	res, err := ec.unmarshalInputNewFeatureBundle(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
