@@ -8,8 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
     <script>
         // **NOTE** this url must be replaced with your own url of cloud run instance where catalog server is running.
-        // const CLOUD_RUN_URL = "https://run.cloudcdn.io/demo-jpx33sh7ha-uc.a.run.app/";
-        const CLOUD_RUN_URL = "localhost/";
+        const CLOUD_RUN_URL = "https://run.cloudcdn.io/demo-jpx33sh7ha-uc.a.run.app/";
     </script>
 
     <!-- Required Material Web JavaScript library -->
@@ -264,25 +263,27 @@
         function submit(queryType) {
             var JSONData = ``
             console.log(queryType)
-            if (queryType == "CreateModule" || queryType == "CreateFeatureBundle") {
-                if (document.getElementById(queryType + "-data-input").value == "") {
-                    alert("Please upload json data")
-                    return;
-                }
-                var file = document.getElementById(queryType + "-data-input").files[0]
-                let reader = new FileReader()
-                reader.readAsText(file)
-                reader.onload = function() {
-                    var fileContentArray = this.result.split(/\r\n|\n/);
-                    for (var line = 0; line < fileContentArray.length; line++) {
-                        JSONData += fileContentArray[line].trim();
-                    }
-
-                    var queryReq = ``;
-                    if (document.getElementById(queryType + "-orgName-input").value == "" || JSONData == "") {
-                        alert("Please input both organization's name and non-empty json data.")
+            switch (queryType) {
+                case 'CreateModule':
+                case 'CreateFeatureBundle':
+                    if (document.getElementById(queryType + "-data-input").value == "") {
+                        alert("Please upload json data")
                         return;
-                    } else {
+                    }
+                    var file = document.getElementById(queryType + "-data-input").files[0]
+                    let reader = new FileReader()
+                    reader.readAsText(file)
+                    reader.onload = function() {
+                        var fileContentArray = this.result.split(/\r\n|\n/);
+                        for (var line = 0; line < fileContentArray.length; line++) {
+                            JSONData += fileContentArray[line].trim();
+                        }
+
+                        var queryReq = ``;
+                        if (document.getElementById(queryType + "-orgName-input").value == "" || JSONData == "") {
+                            alert("Please input both organization's name and non-empty json data.")
+                            return;
+                        }
                         console.log(globalToken)
                         queryReq = `mutation {` + queryType + `(Input:{OrgName:"` +
                             document.getElementById(queryType + "-orgName-input").value + `", Data:` +
@@ -314,47 +315,51 @@
                                 data
                             )
                         });
-                    };
-                }
-            } else {
-                var queryReq = ``;
-                if (document.getElementById(queryType + "-orgName-input").value == " " || document.getElementById(queryType + "-name-input").value == " " || document.getElementById(queryType + "-version-input").value == " ") {
-                    alert("Please input organization's name, version and name")
-                } else {
-                    console.log(globalToken)
-                    queryReq = `mutation {` + queryType + `(Input:{OrgName:"` +
-                        // document.getElementById("orgName-input").value + `", Data:"` +
-                        document.getElementById(queryType + "-orgName-input").value + `", Name:"` +
-                        document.getElementById(queryType + "-name-input").value + `", Version:"` +
-                        document.getElementById(queryType + "-version-input").value + `"` +
+                    }
+                    break
 
-                        `}, Token:"` + globalToken + `")}`
-                    $.ajax({
-                        method: "POST",
-                        url: CLOUD_RUN_URL + `query`,
-                        crossDomain: true,
-                        data: JSON.stringify({
-                            query: queryReq
-                        }),
-                        contentType: "application/json",
-                    }).done((data) => {
-                        var display = ""
-                        if (data.errors != null) {
-                            display = data.errors[0].message
-                        } else {
-                            display = data.data[queryType]
-                        }
+                case "DeleteModule":
+                case "DeleteFeatureBundle":
+                    var queryReq = ``;
+                    if (document.getElementById(queryType + "-orgName-input").value == " " || document.getElementById(queryType + "-name-input").value == " " || document.getElementById(queryType + "-version-input").value == " ") {
+                        alert("Please input organization's name, version and name")
+                    } else {
+                        console.log(globalToken)
+                        queryReq = `mutation {` + queryType + `(Input:{OrgName:"` +
+                            document.getElementById(queryType + "-orgName-input").value + `", Name:"` +
+                            document.getElementById(queryType + "-name-input").value + `", Version:"` +
+                            document.getElementById(queryType + "-version-input").value + `"` +
 
-                        $("#update-result").html(
-                            display
-                        )
-                    }).fail((data) => {
-                        alert(data)
-                        $("#update-result").html(
-                            data
-                        )
-                    });
-                }
+                            `}, Token:"` + globalToken + `")}`
+                        $.ajax({
+                            method: "POST",
+                            url: CLOUD_RUN_URL + `query`,
+                            crossDomain: true,
+                            data: JSON.stringify({
+                                query: queryReq
+                            }),
+                            contentType: "application/json",
+                        }).done((data) => {
+                            var display = ""
+                            if (data.errors != null) {
+                                display = data.errors[0].message
+                            } else {
+                                display = data.data[queryType]
+                            }
+
+                            $("#update-result").html(
+                                display
+                            )
+                        }).fail((data) => {
+                            alert(data)
+                            $("#update-result").html(
+                                data
+                            )
+                        });
+                    }
+                    break
+                default:
+                    console.log("unspported operation " + queryReq)
             }
         }
     </script>

@@ -209,28 +209,34 @@
             fileData = []
             console.log(queryType)
             var queryReq = ``;
-            if (queryType == 'ModulesByOrgName') {
-                queryReq = `{ModulesByOrgName(OrgName:"` + document.getElementById("ModulesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data,URL}}`
-            } else if (queryType == 'ModulesByKey') {
-                comma = false
-                queryReq = `{ModulesByKey(`
-                if (document.getElementById("ModulesByKey-name-input") != null && document.getElementById("ModulesByKey-name-input").value != " ") {
-                    if (comma) {
-                        queryReq += `,`
+            switch (queryType) {
+                case 'ModulesByOrgName':
+                    queryReq = `{ModulesByOrgName(OrgName:"` + document.getElementById("ModulesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data,URL}}`
+                    break
+                case 'ModulesByKey':
+                    comma = false
+                    queryReq = `{ModulesByKey(`
+                    if (document.getElementById("ModulesByKey-name-input") != null && document.getElementById("ModulesByKey-name-input").value != " ") {
+                        if (comma) {
+                            queryReq += `,`
+                        }
+                        queryReq += `Name:"` + document.getElementById("ModulesByKey-name-input").value + `"`
+                        comma = true
                     }
-                    queryReq += `Name:"` + document.getElementById("ModulesByKey-name-input").value + `"`
-                    comma = true
-                }
-                if (document.getElementById("ModulesByKey-version-input") != null && document.getElementById("ModulesByKey-version-input").value != "") {
-                    if (comma) {
-                        queryReq += `,`
+                    if (document.getElementById("ModulesByKey-version-input") != null && document.getElementById("ModulesByKey-version-input").value != "") {
+                        if (comma) {
+                            queryReq += `,`
+                        }
+                        queryReq += `Version:"` + document.getElementById("ModulesByKey-version-input").value + `"`
+                        comma = true
                     }
-                    queryReq += `Version:"` + document.getElementById("ModulesByKey-version-input").value + `"`
-                    comma = true
-                }
-                queryReq += `){OrgName,Name,Version,Data,URL}}`
-            } else if (queryType == 'FeatureBundlesByOrgName') {
-                queryReq = `{FeatureBundlesByOrgName(OrgName:"` + document.getElementById("FeatureBundlesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data}}`
+                    queryReq += `){OrgName,Name,Version,Data,URL}}`
+                    break
+                case 'FeatureBundlesByOrgName':
+                    queryReq = `{FeatureBundlesByOrgName(OrgName:"` + document.getElementById("FeatureBundlesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data}}`
+                    break
+                default:
+                    console.log("unspported operation " + queryType)
             }
             $.ajax({
                 method: "POST",
