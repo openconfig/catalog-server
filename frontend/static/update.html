@@ -8,7 +8,8 @@
     <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
     <script>
         // **NOTE** this url must be replaced with your own url of cloud run instance where catalog server is running.
-        const CLOUD_RUN_URL = "https://run.cloudcdn.io/demo-jpx33sh7ha-uc.a.run.app/";
+        // const CLOUD_RUN_URL = "https://run.cloudcdn.io/demo-jpx33sh7ha-uc.a.run.app/";
+        const CLOUD_RUN_URL = "localhost/";
     </script>
 
     <!-- Required Material Web JavaScript library -->
@@ -141,7 +142,7 @@
         <br>Module's JSON</br>
         <br>
         <div class="mdc-text-field ">
-            <input class="mdc-text-field__input " id="CreateModule-orgName-input" type="file">
+            <input class="mdc-text-field__input " id="CreateModule-data-input" type="file">
             <div class="mdc-line-ripple "></div>
             <label for="text-field-hero-input " class="mdc-floating-label "></label>
         </div>
@@ -197,7 +198,7 @@
         <br>Feature Bundle's JSON</br>
         <br>
         <div class="mdc-text-field ">
-            <input class="mdc-text-field__input " id="CreateFeatureBundle-orgName-input" type="file">
+            <input class="mdc-text-field__input " id="CreateFeatureBundle-data-input" type="file">
             <div class="mdc-line-ripple "></div>
             <label for="text-field-hero-input " class="mdc-floating-label "></label>
         </div>
@@ -264,7 +265,11 @@
             var JSONData = ``
             console.log(queryType)
             if (queryType == "CreateModule" || queryType == "CreateFeatureBundle") {
-                var file = document.getElementById(queryType + "-orgName-input").files[0]
+                if (document.getElementById(queryType + "-data-input").value == "") {
+                    alert("Please upload json data")
+                    return;
+                }
+                var file = document.getElementById(queryType + "-data-input").files[0]
                 let reader = new FileReader()
                 reader.readAsText(file)
                 reader.onload = function() {
@@ -275,7 +280,8 @@
 
                     var queryReq = ``;
                     if (document.getElementById(queryType + "-orgName-input").value == "" || JSONData == "") {
-                        alert("Please input both organization's name and json data.")
+                        alert("Please input both organization's name and non-empty json data.")
+                        return;
                     } else {
                         console.log(globalToken)
                         queryReq = `mutation {` + queryType + `(Input:{OrgName:"` +
