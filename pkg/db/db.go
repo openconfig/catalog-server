@@ -246,7 +246,7 @@ func DeleteModule(orgName string, name string, version string) error {
 	}
 	num, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("DeleteModule, access rows afffected in result failed: %v", err)
+		return fmt.Errorf("DeleteModule, access rows affected in result failed: %v", err)
 	}
 	// delete should only affect one row
 	if num != 1 {
@@ -310,6 +310,7 @@ func InsertFeatureBundle(orgName string, name string, version string, data strin
 // DeleteFeatureBundle takes three pointer of string, orgName, name, version,
 // whose combination is key of one FeatureBundle in DB's FeatureBundle table.
 // If deletion fails, an non-nil error is returned.
+// If the number of rows affected by this deletion is not 1, an error is also returned.
 func DeleteFeatureBundle(orgName string, name string, version string) error {
 	result, err := db.Exec(deleteFeatureBundle, orgName, name, version)
 	if err != nil {
@@ -317,7 +318,7 @@ func DeleteFeatureBundle(orgName string, name string, version string) error {
 	}
 	num, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("DeleteFeatureBundle, access rows afffected in result failed: %v", err)
+		return fmt.Errorf("DeleteFeatureBundle, access rows affected in result failed: %v", err)
 	}
 	// delete should only affect one row
 	if num != 1 {

@@ -17,7 +17,7 @@ import (
 )
 
 // ModuleToGraphQL converts module schema in database to graphQL module response type.
-// It return slice of graphQL module pointers and error if there is any.
+// It returns a slice of graphQL module pointers and an error if there is any.
 func ModuleToGraphQL(dbModules []db.Module) ([]*model.Module, error) {
 	var models []*model.Module
 	for i := 0; i < len(dbModules); i++ {
@@ -42,7 +42,7 @@ func ModuleToGraphQL(dbModules []db.Module) ([]*model.Module, error) {
 }
 
 // FeatureBundleToGraphQL converts FeatureBundle schema in database to graphQL FeatureBundle response type.
-// It return slice of graphQL FeatureBundle pointers and error if there is any.
+// It returns a slice of graphQL FeatureBundle pointers and an error if there is any.
 func FeatureBundleToGraphQL(dbFeatureBundles []db.FeatureBundle) ([]*model.FeatureBundle, error) {
 	var featureBundles []*model.FeatureBundle
 	for i := 0; i < len(dbFeatureBundles); i++ {
