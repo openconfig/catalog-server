@@ -2,10 +2,24 @@
 
 package model
 
+type FeatureBundle struct {
+	OrgName string `json:"OrgName"`
+	Name    string `json:"Name"`
+	Version string `json:"Version"`
+	Data    string `json:"Data"`
+}
+
+type FeatureBundleKey struct {
+	OrgName string `json:"OrgName"`
+	Name    string `json:"Name"`
+	Version string `json:"Version"`
+}
+
 type Module struct {
 	OrgName string `json:"OrgName"`
 	Name    string `json:"Name"`
 	Version string `json:"Version"`
+	URL     string `json:"URL"`
 	Data    string `json:"Data"`
 }
 
@@ -13,6 +27,11 @@ type ModuleKey struct {
 	OrgName string `json:"OrgName"`
 	Name    string `json:"Name"`
 	Version string `json:"Version"`
+}
+
+type NewFeatureBundle struct {
+	OrgName string `json:"OrgName"`
+	Data    string `json:"Data"`
 }
 
 type NewModule struct {

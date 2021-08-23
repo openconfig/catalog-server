@@ -11,8 +11,9 @@ import (
 
 func TestModuleToGraphQL(t *testing.T) {
 	tests := []struct {
-		inputs []db.Module
-		want   []model.Module
+		inputs  []db.Module
+		want    []model.Module
+		wantErr bool
 	}{
 		{
 			inputs: []db.Module{
@@ -20,13 +21,13 @@ func TestModuleToGraphQL(t *testing.T) {
 					OrgName: "org_A",
 					Name:    "module_A",
 					Version: "version_A",
-					Data:    "{}",
+					Data:    `{"openconfig-module-catalog:name": "module_A", "openconfig-module-catalog:access": {"uri": "testlink_A"},"openconfig-module-catalog:version": "version_A"}`,
 				},
 				{
 					OrgName: "org_B",
 					Name:    "module_B",
 					Version: "version_B",
-					Data:    "{}",
+					Data:    `{"openconfig-module-catalog:name": "module_B",  "openconfig-module-catalog:access": {"uri": "testlink_B"}, "openconfig-module-catalog:version": "version_B"}`,
 				},
 			},
 			want: []model.Module{
@@ -34,15 +35,18 @@ func TestModuleToGraphQL(t *testing.T) {
 					OrgName: "org_A",
 					Name:    "module_A",
 					Version: "version_A",
-					Data:    "{}",
+					URL:     "testlink_A",
+					Data:    `{"openconfig-module-catalog:name": "module_A", "openconfig-module-catalog:access": {"uri": "testlink_A"},"openconfig-module-catalog:version": "version_A"}`,
 				},
 				{
 					OrgName: "org_B",
 					Name:    "module_B",
 					Version: "version_B",
-					Data:    "{}",
+					URL:     "testlink_B",
+					Data:    `{"openconfig-module-catalog:name": "module_B",  "openconfig-module-catalog:access": {"uri": "testlink_B"}, "openconfig-module-catalog:version": "version_B"}`,
 				},
 			},
+			wantErr: false,
 		},
 		{
 			inputs: []db.Module{},
@@ -52,7 +56,10 @@ func TestModuleToGraphQL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("TestModuleToGraphQL, number of inputs: %d", len(tc.inputs)), func(t *testing.T) {
-			modules := ModuleToGraphQL(tc.inputs)
+			modules, err := ModuleToGraphQL(tc.inputs)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("wantErr mismatch, err: %v, wantErr: %t", err, tc.wantErr)
+			}
 			for i := 0; i < len(modules); i++ {
 				if diff := cmp.Diff(*modules[i], tc.want[i]); diff != "" {
 					t.Errorf("module mismatch")
@@ -61,4 +68,62 @@ func TestModuleToGraphQL(t *testing.T) {
 		})
 	}
 
+}
+
+func TestFeatureBundleToGraphQL(t *testing.T) {
+	tests := []struct {
+		inputs  []db.FeatureBundle
+		want    []model.FeatureBundle
+		wantErr bool
+	}{
+		{
+			inputs: []db.FeatureBundle{
+				{
+					OrgName: "org_A",
+					Name:    "feature_A",
+					Version: "version_A",
+					Data:    `{"openconfig-module-catalog:name": "feature_A","openconfig-module-catalog:version": "version_A"}`,
+				},
+				{
+					OrgName: "org_B",
+					Name:    "feature_B",
+					Version: "version_B",
+					Data:    `{"openconfig-module-catalog:name": "feature_B","openconfig-module-catalog:version": "version_A"}`,
+				},
+			},
+			want: []model.FeatureBundle{
+				{
+					OrgName: "org_A",
+					Name:    "feature_A",
+					Version: "version_A",
+					Data:    `{"openconfig-module-catalog:name": "feature_A","openconfig-module-catalog:version": "version_A"}`,
+				},
+				{
+					OrgName: "org_B",
+					Name:    "feature_B",
+					Version: "version_B",
+					Data:    `{"openconfig-module-catalog:name": "feature_B","openconfig-module-catalog:version": "version_A"}`,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			inputs: []db.FeatureBundle{},
+			want:   nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("TestModuleToGraphQL, number of inputs: %d", len(tc.inputs)), func(t *testing.T) {
+			featureBundles, err := FeatureBundleToGraphQL(tc.inputs)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("wantErr mismatch, err: %v, wantErr: %t", err, tc.wantErr)
+			}
+			for i := 0; i < len(featureBundles); i++ {
+				if diff := cmp.Diff(*featureBundles[i], tc.want[i]); diff != "" {
+					t.Errorf("featureBundle mismatch")
+				}
+			}
+		})
+	}
 }

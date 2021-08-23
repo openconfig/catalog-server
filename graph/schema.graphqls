@@ -2,12 +2,22 @@ type Module {
   OrgName: String!
   Name: String!
   Version: String!
+  URL: String!
+  Data: String!
+}
+
+type FeatureBundle {
+  OrgName: String!
+  Name: String!
+  Version: String!
   Data: String!
 }
 
 type Query {
   ModulesByOrgName(OrgName: String): [Module!]!
   ModulesByKey(Name: String, Version: String): [Module!]!
+  FeatureBundlesByOrgName(OrgName: String): [FeatureBundle!]!
+  FeatureBundlesByKey(Name: String, Version: String): [FeatureBundle!]!
 }
 
 input NewModule {
@@ -21,7 +31,20 @@ input ModuleKey {
   Version: String!
 }
 
+input NewFeatureBundle {
+  OrgName: String!
+  Data: String!
+}
+
+input FeatureBundleKey {
+  OrgName: String!
+  Name: String!
+  Version: String!
+}
+
 type Mutation {
   CreateModule(Input: NewModule!, Token: String!): String!
   DeleteModule(Input: ModuleKey!, Token: String!): String!
+  CreateFeatureBundle(Input: NewFeatureBundle!, Token: String!): String!
+  DeleteFeatureBundle(Input: FeatureBundleKey!, Token: String!): String!
 }

@@ -55,12 +55,52 @@ func (r *mutationResolver) DeleteModule(ctx context.Context, input model.ModuleK
 	return successMsg, nil
 }
 
+func (r *mutationResolver) CreateFeatureBundle(ctx context.Context, input model.NewFeatureBundle, token string) (string, error) {
+	failMsg := `Fail`
+	successMsg := `Success`
+
+	// Validate the token and check whether it contains access to certain organization
+	if err := access.CheckAccess(token, input.OrgName); err != nil {
+		return failMsg, fmt.Errorf("CreateFeatureBundle: validate token failed: %v", err)
+	}
+
+	// Validate module
+	featureBundle, err := validate.ValidateFeatureBundle(input.Data)
+	if err != nil {
+		return failMsg, fmt.Errorf("CreateFeatureBundle: validate featureBundle failed: %v", err)
+	}
+
+	// Insert module if not exist, or update it.
+	if err := db.InsertFeatureBundle(input.OrgName, featureBundle.GetName(), featureBundle.GetVersion(), input.Data); err != nil {
+		return failMsg, fmt.Errorf("CreateFeatureBundle failed: %v", err)
+	}
+
+	return successMsg, nil
+}
+
+func (r *mutationResolver) DeleteFeatureBundle(ctx context.Context, input model.FeatureBundleKey, token string) (string, error) {
+	failMsg := `Fail`
+	successMsg := `Success`
+
+	// Validate the token and check whether it contains access to certain organization
+	if err := access.CheckAccess(token, input.OrgName); err != nil {
+		return failMsg, fmt.Errorf("DeleteFeatureBundle: validate token failed: %v", err)
+	}
+
+	// Delete a module
+	if err := db.DeleteFeatureBundle(input.OrgName, input.Name, input.Version); err != nil {
+		return failMsg, fmt.Errorf("DeleteFeatureBundle failed: %v", err)
+	}
+
+	return successMsg, nil
+}
+
 func (r *queryResolver) ModulesByOrgName(ctx context.Context, orgName *string) ([]*model.Module, error) {
 	dbModules, err := db.QueryModulesByOrgName(orgName)
 	if err != nil {
 		return nil, err
 	}
-	return dbtograph.ModuleToGraphQL(dbModules), nil
+	return dbtograph.ModuleToGraphQL(dbModules)
 }
 
 func (r *queryResolver) ModulesByKey(ctx context.Context, name *string, version *string) ([]*model.Module, error) {
@@ -68,7 +108,23 @@ func (r *queryResolver) ModulesByKey(ctx context.Context, name *string, version 
 	if err != nil {
 		return nil, err
 	}
-	return dbtograph.ModuleToGraphQL(dbModules), nil
+	return dbtograph.ModuleToGraphQL(dbModules)
+}
+
+func (r *queryResolver) FeatureBundlesByOrgName(ctx context.Context, orgName *string) ([]*model.FeatureBundle, error) {
+	dbFeatureBundles, err := db.QueryFeatureBundlesByOrgName(orgName)
+	if err != nil {
+		return nil, err
+	}
+	return dbtograph.FeatureBundleToGraphQL(dbFeatureBundles)
+}
+
+func (r *queryResolver) FeatureBundlesByKey(ctx context.Context, name *string, version *string) ([]*model.FeatureBundle, error) {
+	dbFeatureBundles, err := db.QueryFeatureBundlesByKey(name, version)
+	if err != nil {
+		return nil, err
+	}
+	return dbtograph.FeatureBundleToGraphQL(dbFeatureBundles)
 }
 
 // Mutation returns generated.MutationResolver implementation.
