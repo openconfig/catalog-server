@@ -246,7 +246,7 @@
     <script>
         const tabs = ["CreateModule", "DeleteModule", "CreateFeatureBundle", "DeleteFeatureBundle"]
 
-        // displayTab is used to displat different table when clicking on tab
+        // displayTab is used to display different table when clicking on tab
         function displayTab(query) {
             console.log(query)
             for (let i = 0; i < tabs.length; i++) {
@@ -263,20 +263,16 @@
         function submit(queryType) {
             var JSONData = ``
             console.log(queryType)
-            console.log(queryType == "CreateModule")
             if (queryType == "CreateModule" || queryType == "CreateFeatureBundle") {
                 var file = document.getElementById(queryType + "-orgName-input").files[0]
                 let reader = new FileReader()
                 reader.readAsText(file)
                 reader.onload = function() {
                     var fileContentArray = this.result.split(/\r\n|\n/);
-                    console.log(fileContentArray.length)
                     for (var line = 0; line < fileContentArray.length; line++) {
-                        // console.log(fileContentArray[line])
                         JSONData += fileContentArray[line].trim();
                     }
 
-                    console.log(JSONData)
                     var queryReq = ``;
                     if (document.getElementById(queryType + "-orgName-input").value == "" || JSONData == "") {
                         alert("Please input both organization's name and json data.")
@@ -297,15 +293,12 @@
                         }).done((data) => {
                             var display = ""
                             if (data.errors != null) {
-                                console.log("1")
                                 display = data.errors[0].message
                             } else {
-                                console.log("2")
                                 console.log(JSON.stringify(data))
 
                                 display = data.data[queryType]
                             }
-                            console.log("display:" + display)
                             $("#update-result").html(
                                 display
                             )

@@ -188,7 +188,7 @@
 
         const tabs = ["ModulesByOrgName", "ModulesByKey", "FeatureBundlesByOrgName"]
 
-        // displayTab is used to displat different table when clicking on tab
+        // displayTab is used to display different table when clicking on tab
         function displayTab(query) {
             console.log(query)
             for (let i = 0; i < tabs.length; i++) {
@@ -232,7 +232,6 @@
             } else if (queryType == 'FeatureBundlesByOrgName') {
                 queryReq = `{FeatureBundlesByOrgName(OrgName:"` + document.getElementById("FeatureBundlesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data}}`
             }
-            console.log(11)
             $.ajax({
                 method: "POST",
                 url: CLOUD_RUN_URL + `query`,
@@ -242,7 +241,6 @@
                 }),
                 contentType: "application/json",
             }).done((data) => {
-                console.log(111)
                 modules = data.data[queryType]
                 tableContent = ``
                 for (let i = 0; i < modules.length; i++) {
