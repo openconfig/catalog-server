@@ -26,7 +26,11 @@ const (
 	selectModules = `select * from modules`
 	// We want to ensure that user has to provide all three inputs,
 	// instead of deleting too many modules by mistake with some fields missing.
-	deleteModule = `delete from modules where orgName = $1 and name = $2 and version = $3`
+	deleteModule         = `delete from modules where orgName = $1 and name = $2 and version = $3`
+	selectFeatureBundles = `select * from featureBundles`
+	// $4 and $5 should be assigned with the same value (the JSON data of feature-bundle).
+	insertFeatureBundle = `INSERT INTO featureBundles (orgName, name, version, data) VALUES($1, $2, $3, $4) on conflict (orgName, name, version) do update set data=$5`
+	deleteFeatureBundle = `delete from featurebundles where orgName = $1 and name = $2 and version = $3`
 )
 
 // db is the global variable of connection to database.
@@ -250,4 +254,106 @@ func DeleteModule(orgName string, name string, version string) error {
 	}
 
 	return nil
+}
+
+// ReadFeatureBundlesByRow scans from queried FeatureBundles from rows one by one, rows are *not* closed inside.
+// Return slice of db FeatureBundle struct each field of which corresponds to one column in db.
+// Error is returned when scan rows failed.
+func ReadFeatureBundlesByRow(rows *sql.Rows) ([]FeatureBundle, error) {
+	var featureBundles []FeatureBundle
+	for rows.Next() {
+		var featureBundle FeatureBundle
+		if err := rows.Scan(&featureBundle.OrgName, &featureBundle.Name, &featureBundle.Version, &featureBundle.Data); err != nil {
+			return nil, fmt.Errorf("ReadFeatureBundlesByRow: scan db rows failure, %v", err)
+		}
+		featureBundles = append(featureBundles, featureBundle)
+	}
+	return featureBundles, nil
+}
+
+// QueryFeatureBundlesByOrgName queries feature-bundles of organization with *orgName* from database.
+// If orgName is null then directly query all feature-bundles.
+// Return slice of db FeatureBundle struct each field of which corresponds to one column in db.
+// Error is returned when query or reading data failed.
+func QueryFeatureBundlesByOrgName(orgName *string) ([]FeatureBundle, error) {
+	var parms []interface{} // parms is used to store value of non-nil query parameters
+	parmNames := []string{} // parmNames is used to store name of non-nil query parameters
+
+	if orgName != nil {
+		parms = append(parms, *orgName)
+		parmNames = append(parmNames, "orgName")
+	}
+
+	// Format query statement string based on non-nil query parameters
+	queryStmt := FormatQueryStr(parmNames, selectFeatureBundles)
+
+	rows, err := db.Query(queryStmt, parms...)
+	if err != nil {
+		return nil, fmt.Errorf("QueryFeatureBundlesByOrgName failed: %v", err)
+	}
+
+	defer rows.Close()
+
+	return ReadFeatureBundlesByRow(rows)
+}
+
+// InsertFeatureBundle inserts FeatureBundle into database given values of four field of FeatureBundle schema.
+// Or if there is existing FeatureBundle with existing key (orgName, name, version), update data field.
+// Error is returned when insertion failed.
+func InsertFeatureBundle(orgName string, name string, version string, data string) error {
+	if _, err := db.Exec(insertFeatureBundle, orgName, name, version, data, data); err != nil {
+		return fmt.Errorf("insert/update FeatureBundle into db failed: %v", err)
+	}
+	return nil
+}
+
+// DeleteFeatureBundle takes three pointer of string, orgName, name, version,
+// whose combination is key of one FeatureBundle in DB's FeatureBundle table.
+// If deletion fails, an non-nil error is returned.
+func DeleteFeatureBundle(orgName string, name string, version string) error {
+	result, err := db.Exec(deleteFeatureBundle, orgName, name, version)
+	if err != nil {
+		return fmt.Errorf("DeleteFeatureBundle failed: %v", err)
+	}
+	num, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("DeleteFeatureBundle, access rows afffected in result failed: %v", err)
+	}
+	// delete should only affect one row
+	if num != 1 {
+		return fmt.Errorf("DeleteFeatureBundle: affected row is not one, it affects %d rows", num)
+	}
+
+	return nil
+}
+
+// QueryFeatureBundlesByKey queries feature-bundles by its key (name, version), it is possible that
+// If both parameters are null, this equals query for all feature-bundles.
+// Return slice of db FeatureBundle struct each field of which corresponds to one column in
+// Error is returned when query or reading data failed.
+func QueryFeatureBundlesByKey(name *string, version *string) ([]FeatureBundle, error) {
+	var parms []interface{} // parms is used to store value of non-nil query paramete
+	parmNames := []string{} // parmNames is used to store name of non-nil query param
+
+	if name != nil {
+		parms = append(parms, *name)
+		parmNames = append(parmNames, "name")
+	}
+
+	if version != nil {
+		parms = append(parms, *version)
+		parmNames = append(parmNames, "version")
+	}
+
+	// Format query statement string based on non-nil query parameters
+	queryStmt := FormatQueryStr(parmNames, selectFeatureBundles)
+
+	rows, err := db.Query(queryStmt, parms...)
+	if err != nil {
+		return nil, fmt.Errorf("QueryFeatureBundlesByKey failed: %v", err)
+	}
+
+	defer rows.Close()
+
+	return ReadFeatureBundlesByRow(rows)
 }

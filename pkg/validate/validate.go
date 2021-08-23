@@ -34,3 +34,27 @@ func ValidateModule(data string) (*oc.OpenconfigModuleCatalog_Organizations_Orga
 	}
 	return module, nil
 }
+
+// ValidateFeatureBundle is used to validate whether the input JSON data is in correct format.
+// It takes a JSON string *data*, and returns a pointer to FeatureBundle if *data* is in correct format.
+// Otherwise, the fucntion returns an error explaining why validation fails.
+func ValidateFeatureBundle(data string) (*oc.OpenconfigModuleCatalog_Organizations_Organization_FeatureBundles_FeatureBundle, error) {
+	featureBundle := &oc.OpenconfigModuleCatalog_Organizations_Organization_FeatureBundles_FeatureBundle{}
+
+	// First check whether the data can be correctly unmarshalled back to a FeatureBundle struct.
+	if err := oc.Unmarshal([]byte(data), featureBundle); err != nil {
+		return nil, fmt.Errorf("ValidateFeatureBundle: cannot unmarshal JSON: %v", err)
+	}
+
+	// Check whether Validate function for FeatureBundle struct that comes from ygot package could pass.
+	if err := featureBundle.Validate(); err != nil {
+		return nil, fmt.Errorf("ValidateFeatureBundle: Validate function failed: %v", err)
+	}
+
+	// Check whether this featureBundle contains non-empty key of FeatureBundle (i.e, name and version).
+	// If not, then return an error.
+	if featureBundle.GetName() == "" || featureBundle.GetVersion() == "" {
+		return nil, fmt.Errorf("ValidateFeatureBundle: FeatureBundle cannot have empty name or version")
+	}
+	return featureBundle, nil
+}
