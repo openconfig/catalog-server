@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <!-- Required styles for Material Web -->
+    <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+    <script>
+        // **NOTE** this url must be replaced with your own url of cloud run instance where catalog server is running.
+        const CLOUD_RUN_URL = "https://run.cloudcdn.io/demo-jpx33sh7ha-uc.a.run.app/";
+    </script>
+
+    <!-- Required Material Web JavaScript library -->
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+
+<body>
+
+    <!-- Tabs to choose tables for different update operations -->
+    <div class="mdc-tab-bar" role="tablist">
+        <div class="mdc-tab-scroller">
+            <div class="mdc-tab-scroller__scroll-area">
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="0" id="query1" onclick="displayTab('ModulesByOrgName')">
+                <span class="mdc-tab__content">
+                  <span class="mdc-tab__text-label">Query Modules By Organization's Name</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                </span>
+                <span class="mdc-tab__ripple"></span>
+              </button>
+                </div>
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="1" id="query2" onclick="displayTab('ModulesByKey')">
+                <span class=" mdc-tab__content ">
+                  <span class="mdc-tab__text-label ">Query Modules By Its Key</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active ">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline "></span>
+                </span>
+                <span class="mdc-tab__ripple "></span>
+              </button>
+                </div>
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="1" id="query2" onclick="displayTab('FeatureBundlesByOrgName')">
+                <span class=" mdc-tab__content ">
+                  <span class="mdc-tab__text-label ">Query FeatureBundle By Its Organization's name</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active ">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline "></span>
+                </span>
+                <span class="mdc-tab__ripple "></span>
+              </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forms for providing required information for creation/update/deletion -->
+    <div id="tab-ModulesByOrgName" style="display:block;">
+        <br>Organization's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="ModulesByOrgName-orgName-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>
+        <button class="mdc-button " id="query" onclick="submit('ModulesByOrgName')">  <span class="mdc-button__ripple "></span> Query</button>
+        </br>
+    </div>
+
+    <div id="tab-ModulesByKey" style="display:none">
+        <br>Module's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="ModulesByKey-name-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+        <br>Module's version</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="ModulesByKey-version-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+        <br>
+        <button class="mdc-button " id="query" onclick="submit('ModulesByKey')">  <span class="mdc-button__ripple "></span> Query</button>
+        </br>
+    </div>
+
+    <div id="tab-FeatureBundlesByOrgName" style="display:none;">
+        <br>Organization's name For Feature Bundle</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="FeatureBundlesByOrgName-orgName-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>
+        <button class="mdc-button " id="query" onclick="submit('FeatureBundlesByOrgName')">  <span class="mdc-button__ripple "></span> Query</button>
+        </br>
+    </div>
+
+    <!-- Tables to display results for different queries -->
+    <div class="mdc-data-table " id="table-ModulesByOrgName" style="display:block;">
+        <div class="mdc-data-table__table-container ">
+            <table class="mdc-data-table__table ">
+                <thead>
+                    <tr class="mdc-data-table__header-row ">
+                        <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">OrgName</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Name</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Version</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">URL</th>
+                        <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">Data</th>
+                    </tr>
+                </thead>
+                <tbody class="mdc-data-table__content " id="content-ModulesByOrgName">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mdc-data-table " id="table-ModulesByKey" style="display:none; ">
+        <div class="mdc-data-table__table-container ">
+            <table class="mdc-data-table__table ">
+                <thead>
+                    <tr class="mdc-data-table__header-row ">
+                        <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">OrgName</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Name</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Version</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">URL</th>
+                        <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">Data</th>
+                    </tr>
+                </thead>
+                <tbody class="mdc-data-table__content " id="content-ModulesByKey">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mdc-data-table " id="table-FeatureBundlesByOrgName" style="display:none; ">
+        <div class="mdc-data-table__table-container ">
+            <table class="mdc-data-table__table ">
+                <thead>
+                    <tr class="mdc-data-table__header-row ">
+                        <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">OrgName</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Name</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Version</th>
+                        <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">Data</th>
+                    </tr>
+                </thead>
+                <tbody class="mdc-data-table__content " id="content-FeatureBundlesByOrgName">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        var fileNames = []
+        var fileData = []
+
+        // download is used to download JSON data file in plain text.
+        function download(id) {
+            filename = fileNames[id]
+            text = fileData[id]
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+
+        const tabs = ["ModulesByOrgName", "ModulesByKey", "FeatureBundlesByOrgName"]
+
+        // displayTab is used to display different table when clicking on tab
+        function displayTab(query) {
+            console.log(query)
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i] == query) {
+                    document.getElementById("tab-" + tabs[i]).style.display = 'block';
+                    document.getElementById("table-" + tabs[i]).style.display = 'block';
+                } else {
+                    document.getElementById("tab-" + tabs[i]).style.display = 'none';
+                    document.getElementById("table-" + tabs[i]).style.display = 'none';
+                }
+            }
+        }
+
+        // submit formats graphQL operaions and sends POST requests to graphQL server.
+        // It then parses response and displays results of query.
+        function submit(queryType) {
+            fileNames = []
+            fileData = []
+            console.log(queryType)
+            var queryReq = ``;
+            switch (queryType) {
+                case 'ModulesByOrgName':
+                    queryReq = `{ModulesByOrgName(OrgName:"` + document.getElementById("ModulesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data,URL}}`
+                    break
+                case 'ModulesByKey':
+                    comma = false
+                    queryReq = `{ModulesByKey(`
+                    if (document.getElementById("ModulesByKey-name-input") != null && document.getElementById("ModulesByKey-name-input").value != " ") {
+                        if (comma) {
+                            queryReq += `,`
+                        }
+                        queryReq += `Name:"` + document.getElementById("ModulesByKey-name-input").value + `"`
+                        comma = true
+                    }
+                    if (document.getElementById("ModulesByKey-version-input") != null && document.getElementById("ModulesByKey-version-input").value != "") {
+                        if (comma) {
+                            queryReq += `,`
+                        }
+                        queryReq += `Version:"` + document.getElementById("ModulesByKey-version-input").value + `"`
+                        comma = true
+                    }
+                    queryReq += `){OrgName,Name,Version,Data,URL}}`
+                    break
+                case 'FeatureBundlesByOrgName':
+                    queryReq = `{FeatureBundlesByOrgName(OrgName:"` + document.getElementById("FeatureBundlesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data}}`
+                    break
+                default:
+                    console.log("unspported operation " + queryType)
+            }
+            $.ajax({
+                method: "POST",
+                url: CLOUD_RUN_URL + `query`,
+                crossDomain: true,
+                data: JSON.stringify({
+                    query: queryReq
+                }),
+                contentType: "application/json",
+            }).done((data) => {
+                modules = data.data[queryType]
+                tableContent = ``
+                for (let i = 0; i < modules.length; i++) {
+                    tableContent += `<tr class="mdc-data-table__row ">`
+                    tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].OrgName + `</th>`
+                    tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].Name + `</th>`
+                    tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].Version + `</th>`
+                    if (queryType == "ModulesByOrgName" || queryType == "ModulesByKey") {
+                        tableContent += `<th class="mdc-data-table__cell " scope="row "><a href="` + modules[i].URL + `">URL</a>` + `</th>`
+                    }
+                    tableContent += `<th class="mdc-data-table__cell " scope="row ">
+                    <div class="mdc-touch-target-wrapper ">
+                    <button class="mdc-button mdc-button--touch " onclick="download( '` + i + `') ">
+                        <span class="mdc-button__ripple "></span>
+                        <span class="mdc-button__touch "></span>
+                        <span class="mdc-button__label ">Download</span>
+                    </button>
+                    </div></th>`
+                    fileData.push(modules[i].Data)
+                    fileNames.push(modules[i].OrgName + "-" + modules[i].Name + "-" + modules[i].Version)
+                    tableContent += `</tr>`
+                }
+                $("#content-" + queryType).html(
+                    tableContent
+                )
+            }).fail((data) => {
+                console.log(JSON.stringify(data))
+            });
+        }
+    </script>
+</body>
+
+</html>

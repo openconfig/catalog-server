@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <!-- Required styles for Material Web -->
+    <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+    <script>
+        // **NOTE** this url must be replaced with your own url of cloud run instance where catalog server is running.
+        const CLOUD_RUN_URL = "https://run.cloudcdn.io/demo-jpx33sh7ha-uc.a.run.app/";
+    </script>
+
+    <!-- Required Material Web JavaScript library -->
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <!-- Note the codes below should be replaced with boilerplate codes from identity platform of your project where catalog server is running-->
+    <!-- START -->
+    <script src="https://www.gstatic.com/firebasejs/8.9.0/firebase.js"></script>
+    <script>
+        var config = {
+            apiKey: "AIzaSyBvyT9x6PnxGO3QC97xduPxHBDU53GLeLI",
+            authDomain: "disco-idea-817.firebaseapp.com",
+        };
+        firebase.initializeApp(config);
+    </script>
+    <!-- END -->
+
+    <script src="https://www.gstatic.com/firebasejs/ui/4.5.1/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.5.1/firebase-ui-auth.css" />
+
+    <script>
+        var globalToken = "unknown";
+        // Obtain token from logging in
+        var ui = new firebaseui.auth.AuthUI(firebase.auth());
+        ui.start('#firebaseui-auth-container', {
+            signInOptions: [
+                firebase.auth.EmailAuthProvider.PROVIDER_ID
+            ],
+            callbacks: {
+                signInSuccessWithAuthResult: function(authResult) {
+                    authResult.user.getIdToken().then((token) => {
+                        globalToken = token;
+                    });
+                    return false;
+                }
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <!-- Table for logging in -->
+    <div id="firebaseui-auth-container"></div>
+
+    <!-- Tabs to choose tables for different update operations -->
+    <div class="mdc-tab-bar" role="tablist">
+        <div class="mdc-tab-scroller">
+            <div class="mdc-tab-scroller__scroll-area">
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="0" onclick="displayTab('CreateModule')">
+                <span class="mdc-tab__content">
+                  <span class="mdc-tab__text-label">Create/Update Module</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                </span>
+                <span class="mdc-tab__ripple"></span>
+              </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mdc-tab-bar" role="tablist">
+        <div class="mdc-tab-scroller">
+            <div class="mdc-tab-scroller__scroll-area">
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="0" onclick="displayTab('DeleteModule')">
+                        <span class=" mdc-tab__content ">
+                  <span class="mdc-tab__text-label ">Delete Module</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active ">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline "></span>
+                </span>
+                <span class="mdc-tab__ripple "></span>
+              </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mdc-tab-bar" role="tablist">
+        <div class="mdc-tab-scroller">
+            <div class="mdc-tab-scroller__scroll-area">
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="0" onclick="displayTab('CreateFeatureBundle')">
+                <span class="mdc-tab__content">
+                  <span class="mdc-tab__text-label">Create/Update Feature Bundle</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                </span>
+                <span class="mdc-tab__ripple"></span>
+              </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mdc-tab-bar" role="tablist">
+        <div class="mdc-tab-scroller">
+            <div class="mdc-tab-scroller__scroll-area">
+                <div class="mdc-tab-scroller__scroll-content">
+                    <button class="mdc-tab mdc-tab--active" role="tab" aria-selected="true" tabindex="0" onclick="displayTab('DeleteFeatureBundle')">
+                <span class="mdc-tab__content">
+                  <span class="mdc-tab__text-label">Delete Feature Bundle</span>
+                </span>
+                <span class="mdc-tab-indicator mdc-tab-indicator--active">
+                  <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                </span>
+                <span class="mdc-tab__ripple"></span>
+              </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Forms for providing required information for creation/update/deletion -->
+    <div id="tab-CreateModule" style="display:block; ">
+        <br>Organization's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="CreateModule-orgName-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+        <br>Module's JSON</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="CreateModule-data-input" type="file">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>
+        <button class="mdc-button " onclick="submit('CreateModule')">  <span class="mdc-button__ripple "></span>Submit</button>
+        </br>
+    </div>
+
+    <div id="tab-DeleteModule" style="display:none; ">
+        <br>Organization's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="DeleteModule-orgName-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>Module's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="DeleteModule-name-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>Module's version</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="DeleteModule-version-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>
+        <button class="mdc-button " onclick="submit('DeleteModule')">  <span class="mdc-button__ripple "></span>Submit</button>
+        </br>
+    </div>
+
+    <div id="tab-CreateFeatureBundle" style="display:none; ">
+        <br>Organization's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="CreateFeatureBundle-orgName-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+        <br>Feature Bundle's JSON</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="CreateFeatureBundle-data-input" type="file">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>
+        <button class="mdc-button " onclick="submit('CreateFeatureBundle')">  <span class="mdc-button__ripple "></span>Submit</button>
+        </br>
+    </div>
+
+    <div id="tab-DeleteFeatureBundle" style="display:none; ">
+        <br>Organization's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="DeleteFeatureBundle-orgName-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>Feature Bundle's name</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="DeleteFeatureBundle-name-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>Feature Bundle's version</br>
+        <br>
+        <div class="mdc-text-field ">
+            <input class="mdc-text-field__input " id="DeleteFeatureBundle-version-input">
+            <div class="mdc-line-ripple "></div>
+            <label for="text-field-hero-input " class="mdc-floating-label "></label>
+        </div>
+        </br>
+
+        <br>
+        <button class="mdc-button " onclick="submit('DeleteFeatureBundle') ">  <span class="mdc-button__ripple "></span>Submit</button>
+        </br>
+    </div>
+
+
+    <div id="update-result"></div>
+    <script>
+        const tabs = ["CreateModule", "DeleteModule", "CreateFeatureBundle", "DeleteFeatureBundle"]
+
+        // displayTab is used to display different table when clicking on tab
+        function displayTab(query) {
+            console.log(query)
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i] == query) {
+                    document.getElementById("tab-" + tabs[i]).style.display = 'block';
+                } else {
+                    document.getElementById("tab-" + tabs[i]).style.display = 'none';
+                }
+            }
+        }
+
+        // submit formats graphQL operaions and sends POST requests to graphQL server.
+        // It then parses response and displays results of operation.
+        function submit(queryType) {
+            var JSONData = ``
+            console.log(queryType)
+            switch (queryType) {
+                case 'CreateModule':
+                case 'CreateFeatureBundle':
+                    if (document.getElementById(queryType + "-data-input").value == "") {
+                        alert("Please upload json data")
+                        return;
+                    }
+                    var file = document.getElementById(queryType + "-data-input").files[0]
+                    let reader = new FileReader()
+                    reader.readAsText(file)
+                    reader.onload = function() {
+                        var fileContentArray = this.result.split(/\r\n|\n/);
+                        for (var line = 0; line < fileContentArray.length; line++) {
+                            JSONData += fileContentArray[line].trim();
+                        }
+
+                        var queryReq = ``;
+                        if (document.getElementById(queryType + "-orgName-input").value == "" || JSONData == "") {
+                            alert("Please input both organization's name and non-empty json data.")
+                            return;
+                        }
+                        console.log(globalToken)
+                        queryReq = `mutation {` + queryType + `(Input:{OrgName:"` +
+                            document.getElementById(queryType + "-orgName-input").value + `", Data:` +
+                            JSON.stringify(JSONData) +
+                            `}, Token:"` + globalToken + `")}`
+                        $.ajax({
+                            method: "POST",
+                            url: CLOUD_RUN_URL + `query`,
+                            crossDomain: true,
+                            data: JSON.stringify({
+                                query: queryReq
+                            }),
+                            contentType: "application/json",
+                        }).done((data) => {
+                            var display = ""
+                            if (data.errors != null) {
+                                display = data.errors[0].message
+                            } else {
+                                console.log(JSON.stringify(data))
+
+                                display = data.data[queryType]
+                            }
+                            $("#update-result").html(
+                                display
+                            )
+                        }).fail((data) => {
+                            alert(data)
+                            $("#update-result").html(
+                                data
+                            )
+                        });
+                    }
+                    break
+
+                case "DeleteModule":
+                case "DeleteFeatureBundle":
+                    var queryReq = ``;
+                    if (document.getElementById(queryType + "-orgName-input").value == " " || document.getElementById(queryType + "-name-input").value == " " || document.getElementById(queryType + "-version-input").value == " ") {
+                        alert("Please input organization's name, version and name")
+                    } else {
+                        console.log(globalToken)
+                        queryReq = `mutation {` + queryType + `(Input:{OrgName:"` +
+                            document.getElementById(queryType + "-orgName-input").value + `", Name:"` +
+                            document.getElementById(queryType + "-name-input").value + `", Version:"` +
+                            document.getElementById(queryType + "-version-input").value + `"` +
+
+                            `}, Token:"` + globalToken + `")}`
+                        $.ajax({
+                            method: "POST",
+                            url: CLOUD_RUN_URL + `query`,
+                            crossDomain: true,
+                            data: JSON.stringify({
+                                query: queryReq
+                            }),
+                            contentType: "application/json",
+                        }).done((data) => {
+                            var display = ""
+                            if (data.errors != null) {
+                                display = data.errors[0].message
+                            } else {
+                                display = data.data[queryType]
+                            }
+
+                            $("#update-result").html(
+                                display
+                            )
+                        }).fail((data) => {
+                            alert(data)
+                            $("#update-result").html(
+                                data
+                            )
+                        });
+                    }
+                    break
+                default:
+                    console.log("unspported operation " + queryReq)
+            }
+        }
+    </script>
+</body>
+
+</html>
