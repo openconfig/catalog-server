@@ -11,4 +11,5 @@ require (
 	github.com/openconfig/goyang v0.2.6
 	github.com/openconfig/ygot v0.11.0
 	github.com/vektah/gqlparser/v2 v2.1.0
+	google.golang.org/api v0.40.0
 )
