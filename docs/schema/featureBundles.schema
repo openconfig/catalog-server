@@ -1,0 +1,7 @@
+CREATE TABLE featureBundles (
+    orgName text NOT NULL,
+    name text not null,
+    version text not null,
+    data jsonb NOT NULL,
+    primary key (orgName, name, version)
+);
