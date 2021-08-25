@@ -258,6 +258,20 @@ func main() {
 			log.Fatalf("Marshalling into json string failed\n")
 		}
 
+		// Query to check whether the key already exists before insertion.
+		// As we crawl from the lastest version to the oldest one, we want to only insert the lastest data into database.
+		queryRes, err := db.QueryModulesByKey(module.Name, module.Version)
+		if err != nil {
+			log.Printf("Query module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
+			continue
+		}
+
+		// If the key already matches an existing module, we would not do an insertion.
+		if len(queryRes) > 0 {
+			log.Printf("module, Name: %s, Version: %s already exists in database, do not update it\n", module.GetName(), module.GetVersion())
+			continue
+		}
+
 		if err := db.InsertModule(orgName, module.GetName(), module.GetVersion(), json); err != nil {
 			log.Printf("Insert module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
 			continue
