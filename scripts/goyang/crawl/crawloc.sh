@@ -20,9 +20,9 @@ do
         delete=true
     fi
     cd ..
-    echo "./goyang -p $path -u https://github.com/openconfig/public/blob/$commit/"
+    echo "./crawl -p $path -u https://raw.githubusercontent.com/openconfig/public/$commit/"
 
-    ./goyang -p $path -u https://github.com/openconfig/public/blob/$commit/
+    ./crawl -p $path -u https://raw.githubusercontent.com/openconfig/public/$commit/
     cd public
     # Track how many commits the script has crawled.
     echo $times
