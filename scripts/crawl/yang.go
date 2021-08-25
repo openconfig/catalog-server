@@ -129,29 +129,11 @@ func traverseDir(dir string, url string) ([]string, error) {
 
 var stop = os.Exit
 
-func main() {
-	var help bool
-	var paths []string
-	var url string
-	getopt.ListVarLong(&paths, "path", 'p', "comma separated list of directories to add to search path", "DIR[,DIR...]")
-	getopt.BoolVarLong(&help, "help", 'h', "display help")
-	// *url* is the url prefix of github repo at certain commit that we are crawling modules from.
-	getopt.StringVarLong(&url, "url", 'u', "url prefix of git commit that we are crawling")
-	getopt.SetParameters("")
-
-	if err := getopt.Getopt(func(o getopt.Option) bool {
-		return true
-	}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		getopt.PrintUsage(os.Stderr)
-		os.Exit(1)
-	}
-
-	if help {
-		getopt.CommandLine.PrintUsage(os.Stderr)
-		os.Exit(0)
-	}
-
+// crawlModules is mainly from goyang program.
+// It takes inputs of a list of *paths*, and a *url* prefix of the commit where the crawler is crawling.
+// It first traverse all given paths to find all modules in these paths.
+// Then it crawls data of each module using goyang library, and return a slice of points of yang.Module, and a sorted slice of names of modules.
+func crawlModules(paths []string, url string) (map[string]*yang.Module, []string) {
 	for _, path := range paths {
 		expanded, err := yang.PathsWithModules(path)
 		if err != nil {
@@ -201,6 +183,110 @@ func main() {
 		}
 	}
 	sort.Strings(names)
+	return mods, names
+}
+
+// populateModule takes a pointer of yang.Module *mod*, and *name* of this module.
+// It populates this yang.Module into a YANG catalog Module, and returns pointer to that module.
+// If any error happens during the process, it just return a nil pointer.
+func populateModule(mod *yang.Module, name string) *oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module {
+	module := &oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module{
+		Name:      &mod.Name,
+		Namespace: &mod.Namespace.Name,
+		Prefix:    &mod.Prefix.Name,
+		Summary:   &mod.Description.Name,
+	}
+
+	version, err := yang.MatchingExtensions(mod, "openconfig-extensions", "openconfig-version")
+	if err != nil || len(version) == 0 {
+		log.Printf("%s do not have version\n", mod.Name)
+		return nil
+	}
+
+	module.Version = &version[0].Argument
+
+	// If there are multiple revisions, we directly use the lastest one.
+	if len(mod.Revision) > 0 {
+		module.Revision = &mod.Revision[0].Name
+	}
+	for i := 0; i < len(mod.Import); i++ {
+		module.GetOrCreateDependencies().RequiredModule = append(module.GetOrCreateDependencies().RequiredModule, mod.Import[i].Name)
+	}
+	for i := 0; i < len(mod.Include); i++ {
+		module.GetOrCreateSubmodules().GetOrCreateSubmodule(mod.Include[i].Name)
+		submoduleURL := urlMap[mod.Include[i].Name]
+		if submoduleURL == "" {
+			log.Fatalf("cannot find url of submodule: %s", mod.Include[i].Name)
+			return nil
+		}
+		module.GetOrCreateSubmodules().GetOrCreateSubmodule(mod.Include[i].Name).GetOrCreateAccess().Uri = &submoduleURL
+
+	}
+	moduleURL := urlMap[name]
+	module.GetOrCreateAccess().Uri = &moduleURL
+	return module
+}
+
+// insertModule marshalls the module into JSON string, and tries to insert it into database.
+// It checks whether the key (name+version) of module already exists, if the module exists, then the insertion is skipped.
+func insertModule(module *oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module) {
+	// Serialize module struct into json for insertion.
+	json, err := ygot.EmitJSON(module, &ygot.EmitJSONConfig{
+		Format: ygot.RFC7951,
+		Indent: "  ",
+		RFC7951Config: &ygot.RFC7951JSONConfig{
+			AppendModuleName: true,
+		},
+	})
+	if err != nil {
+		log.Fatalf("Marshalling into json string failed\n")
+	}
+
+	// Query to check whether the key already exists before insertion.
+	// As we crawl from the lastest version to the oldest one, we want to only insert the lastest data into database.
+	queryRes, err := db.QueryModulesByKey(module.Name, module.Version)
+	if err != nil {
+		log.Printf("Query module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
+		return
+	}
+
+	// If the key already matches an existing module, we would not do an insertion.
+	if len(queryRes) > 0 {
+		log.Printf("module, Name: %s, Version: %s already exists in database, do not update it\n", module.GetName(), module.GetVersion())
+		return
+	}
+
+	if err := db.InsertModule(orgName, module.GetName(), module.GetVersion(), json); err != nil {
+		log.Printf("Insert module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
+		return
+	}
+	log.Printf("Inserting module succeeds, Name: %s, Version: %s\n", module.GetName(), module.GetVersion())
+}
+
+func main() {
+	var help bool
+	var paths []string
+	var url string
+	getopt.ListVarLong(&paths, "path", 'p', "comma separated list of directories to add to search path", "DIR[,DIR...]")
+	getopt.BoolVarLong(&help, "help", 'h', "display help")
+	// *url* is the url prefix of github repo at certain commit that we are crawling modules from.
+	getopt.StringVarLong(&url, "url", 'u', "url prefix of git commit that we are crawling")
+	getopt.SetParameters("")
+
+	if err := getopt.Getopt(func(o getopt.Option) bool {
+		return true
+	}); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		getopt.PrintUsage(os.Stderr)
+		os.Exit(1)
+	}
+
+	if help {
+		getopt.CommandLine.PrintUsage(os.Stderr)
+		os.Exit(0)
+	}
+
+	mods, names := crawlModules(paths, url)
 
 	// Connect to DB
 	if err := db.ConnectDB(); err != nil {
@@ -211,72 +297,12 @@ func main() {
 
 	// Convert all found modules into ygot go structure of Module and insert them into database.
 	for _, n := range names {
-		module := &oc.OpenconfigModuleCatalog_Organizations_Organization_Modules_Module{
-			Name:      &mods[n].Name,
-			Namespace: &mods[n].Namespace.Name,
-			Prefix:    &mods[n].Prefix.Name,
-			Summary:   &mods[n].Description.Name,
-		}
-
-		version, err := yang.MatchingExtensions(mods[n], "openconfig-extensions", "openconfig-version")
-		if err != nil || len(version) == 0 {
-			log.Printf("%s do not have version\n", mods[n].Name)
+		module := populateModule(mods[n], n)
+		// if module is nil, it means that there is some issue when populating this module, thus we skip inserting it.
+		if module == nil {
 			continue
 		}
-
-		module.Version = &version[0].Argument
-
-		// If there are multiple revisions, we directly use the lastest one.
-		if len(mods[n].Revision) > 0 {
-			module.Revision = &mods[n].Revision[0].Name
-		}
-		for i := 0; i < len(mods[n].Import); i++ {
-			module.GetOrCreateDependencies().RequiredModule = append(module.GetOrCreateDependencies().RequiredModule, mods[n].Import[i].Name)
-		}
-		for i := 0; i < len(mods[n].Include); i++ {
-			module.GetOrCreateSubmodules().GetOrCreateSubmodule(mods[n].Include[i].Name)
-			submoduleURL := urlMap[mods[n].Include[i].Name]
-			if submoduleURL == "" {
-				log.Fatalf("cannot find url of submodule: %s", mods[n].Include[i].Name)
-				continue
-			}
-			module.GetOrCreateSubmodules().GetOrCreateSubmodule(mods[n].Include[i].Name).GetOrCreateAccess().Uri = &submoduleURL
-
-		}
-		moduleURL := urlMap[n]
-		module.GetOrCreateAccess().Uri = &moduleURL
-
-		// Serialize module struct into json for insertion.
-		json, err := ygot.EmitJSON(module, &ygot.EmitJSONConfig{
-			Format: ygot.RFC7951,
-			Indent: "  ",
-			RFC7951Config: &ygot.RFC7951JSONConfig{
-				AppendModuleName: true,
-			},
-		})
-		if err != nil {
-			log.Fatalf("Marshalling into json string failed\n")
-		}
-
-		// Query to check whether the key already exists before insertion.
-		// As we crawl from the lastest version to the oldest one, we want to only insert the lastest data into database.
-		queryRes, err := db.QueryModulesByKey(module.Name, module.Version)
-		if err != nil {
-			log.Printf("Query module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
-			continue
-		}
-
-		// If the key already matches an existing module, we would not do an insertion.
-		if len(queryRes) > 0 {
-			log.Printf("module, Name: %s, Version: %s already exists in database, do not update it\n", module.GetName(), module.GetVersion())
-			continue
-		}
-
-		if err := db.InsertModule(orgName, module.GetName(), module.GetVersion(), json); err != nil {
-			log.Printf("Insert module, Name: %s, Version: %s failed: %v\n", module.GetName(), module.GetVersion(), err)
-			continue
-		}
-		log.Printf("Inserting module succeeds, Name: %s, Version: %s\n", module.GetName(), module.GetVersion())
+		insertModule(module)
 	}
 
 }
