@@ -1,0 +1,12 @@
+module subdir1 {
+  yang-version "1";
+
+namespace "namespace:goes:here";
+  prefix "subdir1";
+  import openconfig-extensions { prefix oc-ext; }
+
+  description
+    "subdir1 desc";
+
+  oc-ext:openconfig-version "1.5.0";
+}
