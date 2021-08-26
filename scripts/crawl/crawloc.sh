@@ -5,6 +5,7 @@ cp -r ./public/third_party/ietf .
 cd public
 
 times = 0
+# This retrives all commits in reverse chronological order to mitigate bad version numbers in older commits poisoning the data.
 commits=`git rev-list --all`
 for commit in $commits
 do
