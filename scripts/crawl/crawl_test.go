@@ -48,13 +48,11 @@ func TestCrawlModules(t *testing.T) {
 		modules = append(modules, module)
 	}
 
-	counter := 0
-	for _, tc := range tests {
+	for idx, tc := range tests {
 		t.Run(fmt.Sprintf("TestCrawlModules name: %s, version: %s, summary: %s", tc.name, tc.version, tc.summary), func(t *testing.T) {
-			if modules[counter].GetName() != tc.name || modules[counter].GetVersion() != tc.version || modules[counter].GetSummary() != tc.summary {
-				t.Errorf("crawled modules mismatch, name: %s, version: %s summary: %s, expected name: %s, expected version: %s, expected summary: %s", modules[counter].GetName(), modules[counter].GetVersion(), modules[counter].GetSummary(), tc.name, tc.version, tc.summary)
+			if modules[idx].GetName() != tc.name || modules[idx].GetVersion() != tc.version || modules[idx].GetSummary() != tc.summary {
+				t.Errorf("crawled modules mismatch, name: %s, version: %s summary: %s, expected name: %s, expected version: %s, expected summary: %s", modules[idx].GetName(), modules[idx].GetVersion(), modules[idx].GetSummary(), tc.name, tc.version, tc.summary)
 			}
-			counter += 1
 		})
 	}
 }
