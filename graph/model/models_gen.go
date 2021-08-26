@@ -20,6 +20,7 @@ type Module struct {
 	Name    string `json:"Name"`
 	Version string `json:"Version"`
 	URL     string `json:"URL"`
+	Summary string `json:"Summary"`
 	Data    string `json:"Data"`
 }
 

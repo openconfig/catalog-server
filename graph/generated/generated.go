@@ -54,6 +54,7 @@ type ComplexityRoot struct {
 		Data    func(childComplexity int) int
 		Name    func(childComplexity int) int
 		OrgName func(childComplexity int) int
+		Summary func(childComplexity int) int
 		URL     func(childComplexity int) int
 		Version func(childComplexity int) int
 	}
@@ -149,6 +150,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Module.OrgName(childComplexity), true
+
+	case "Module.Summary":
+		if e.complexity.Module.Summary == nil {
+			break
+		}
+
+		return e.complexity.Module.Summary(childComplexity), true
 
 	case "Module.URL":
 		if e.complexity.Module.URL == nil {
@@ -329,6 +337,7 @@ var sources = []*ast.Source{
   Name: String!
   Version: String!
   URL: String!
+  Summary: String!
   Data: String!
 }
 
@@ -373,7 +382,8 @@ type Mutation {
   DeleteModule(Input: ModuleKey!, Token: String!): String!
   CreateFeatureBundle(Input: NewFeatureBundle!, Token: String!): String!
   DeleteFeatureBundle(Input: FeatureBundleKey!, Token: String!): String!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -872,6 +882,41 @@ func (ec *executionContext) _Module_URL(ctx context.Context, field graphql.Colle
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Module_Summary(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Summary, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2623,6 +2668,11 @@ func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "URL":
 			out.Values[i] = ec._Module_URL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Summary":
+			out.Values[i] = ec._Module_Summary(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

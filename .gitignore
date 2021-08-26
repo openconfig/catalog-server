@@ -11,5 +11,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Administrative key file
+scripts/admin/sa-claims.key
+
 # Dependency directories (remove the comment below to include it)
 # vendor/

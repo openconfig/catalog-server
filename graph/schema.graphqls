@@ -3,6 +3,7 @@ type Module {
   Name: String!
   Version: String!
   URL: String!
+  Summary: String!
   Data: String!
 }
 

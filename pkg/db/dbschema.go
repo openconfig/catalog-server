@@ -7,6 +7,7 @@ type Module struct {
 	OrgName string // OrgName column refers to name of organization's name holding this Module.
 	Name    string // Namme column refers to name of this Module.
 	Version string // Version column refers to version of this Module.
+	Summary string // Version column refers to summary of this Module.
 	Data    string // Data column refers to json format string of this Module in YANG schema.
 }
 
