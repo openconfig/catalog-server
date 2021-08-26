@@ -30,6 +30,7 @@ do
     if $delete; then
         rm -rf ./third_party
     fi
+    # Sleep for a while to release previous connection with DB, to avoid connection failure in the next run.
     sleep 10
 done
 

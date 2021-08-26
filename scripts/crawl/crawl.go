@@ -84,7 +84,7 @@ func traverseDir(dir string, url string) ([]string, error) {
 				return fmt.Errorf("traverseDir: failed to open file %s: %v", p, err)
 			}
 			// *name* is name of yang module/submodule, we get it by removing `.yang` from original file name.
-			name := f.Name()[:len(f.Name())-5]
+			name := strings.TrimSuffix(f.Name(), ".yang")
 
 			// Check whether found module is under `models` directory or `ietf` dirctory.
 			if strings.Contains(p, modelKeyword) {
