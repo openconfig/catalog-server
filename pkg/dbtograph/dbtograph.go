@@ -31,6 +31,7 @@ func ModuleToGraphQL(dbModules []db.Module) ([]*model.Module, error) {
 			OrgName: dbModules[i].OrgName,
 			Name:    dbModules[i].Name,
 			Version: dbModules[i].Version,
+			Summary: module.GetSummary(),
 			Data:    dbModules[i].Data,
 		}
 		if module.GetAccess() != nil {

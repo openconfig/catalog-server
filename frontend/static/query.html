@@ -122,6 +122,7 @@
                         <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Name</th>
                         <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Version</th>
                         <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">URL</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Summary</th>
                         <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">Data</th>
                     </tr>
                 </thead>
@@ -140,6 +141,7 @@
                         <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Name</th>
                         <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Version</th>
                         <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">URL</th>
+                        <th class="mdc-data-table__header-cell " role=" columnheader " scope="col ">Summary</th>
                         <th class="mdc-data-table__header-cell " role="columnheader " scope="col ">Data</th>
                     </tr>
                 </thead>
@@ -211,7 +213,7 @@
             var queryReq = ``;
             switch (queryType) {
                 case 'ModulesByOrgName':
-                    queryReq = `{ModulesByOrgName(OrgName:"` + document.getElementById("ModulesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data,URL}}`
+                    queryReq = `{ModulesByOrgName(OrgName:"` + document.getElementById("ModulesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data,URL,Summary}}`
                     break
                 case 'ModulesByKey':
                     comma = false
@@ -230,7 +232,7 @@
                         queryReq += `Version:"` + document.getElementById("ModulesByKey-version-input").value + `"`
                         comma = true
                     }
-                    queryReq += `){OrgName,Name,Version,Data,URL}}`
+                    queryReq += `){OrgName,Name,Version,Data,URL,Summary}}`
                     break
                 case 'FeatureBundlesByOrgName':
                     queryReq = `{FeatureBundlesByOrgName(OrgName:"` + document.getElementById("FeatureBundlesByOrgName-orgName-input").value + `"){OrgName,Name,Version,Data}}`
@@ -257,6 +259,7 @@
                     if (queryType == "ModulesByOrgName" || queryType == "ModulesByKey") {
                         tableContent += `<th class="mdc-data-table__cell " scope="row "><a href="` + modules[i].URL + `">URL</a>` + `</th>`
                     }
+                    tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].Summary + `</th>`
                     tableContent += `<th class="mdc-data-table__cell " scope="row ">
                     <div class="mdc-touch-target-wrapper ">
                     <button class="mdc-button mdc-button--touch " onclick="download( '` + i + `') ">
