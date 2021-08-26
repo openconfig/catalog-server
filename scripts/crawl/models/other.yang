@@ -1,0 +1,21 @@
+module other {
+  namespace "uri:empty";
+  prefix "otherp";
+  import openconfig-extensions { prefix oc-ext; }
+
+  description
+    "other desc";
+  oc-ext:openconfig-version "1.4.0";
+
+  typedef other-type { type string; }
+
+  // This container should not appear in base, even though this file is
+  // imported by base.  That is just the YANG is defined.
+  container other-container {
+    leaf other-container-leaf1 { type other-type; }
+    leaf other-container-leaf2 { type otherp:other-type; }
+  }
+  grouping other-group {
+    leaf other-group-leaf { type string; }
+  }
+}

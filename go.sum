@@ -184,6 +184,7 @@ github.com/openconfig/ygot v0.11.0 h1:CAi4Uk96tdonyoWP7uMFqccpA0G5OUCgBpPGBpYre4
 github.com/openconfig/ygot v0.11.0/go.mod h1:5q5fz1SDPGUwMyzbm8Ns2Krul+32euNSU89ZmrGrSK8=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
+github.com/pborman/getopt v0.0.0-20190409184431-ee0cd42419d3 h1:YtFkrqsMEj7YqpIhRteVxJxCeC3jJBieuLr0d4C4rSA=
 github.com/pborman/getopt v0.0.0-20190409184431-ee0cd42419d3/go.mod h1:85jBQOZwpVEaDAr341tbn15RS4fCAsIst0qp7i8ex1o=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

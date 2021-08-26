@@ -1,0 +1,11 @@
+submodule sub {
+  belongs-to base { prefix "sbase"; }
+  typedef sub-type { type sub-type2; }
+  typedef sub-type2 { type int8; }
+  container sub-container {
+    leaf sub-container-leaf { type sub-type; }
+  }
+  grouping sub-group {
+    leaf sub-group-leaf { type string; }
+  }
+}
