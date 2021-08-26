@@ -25,10 +25,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -65,38 +66,35 @@ var urlMap = map[string]string{}
 // *url* is the url prefix of github repo at certain commit.
 // It returns a slice of names of modules found.
 func traverseDir(dir string, url string) ([]string, error) {
-	dirfiles, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("traverseDir: read files from directory %s failed: %v\n", dir, err)
-	}
 	var names []string
-	var dirs []string
-	for _, f := range dirfiles {
-		if f.Mode().IsDir() {
-			// Append subdirectories into *dirs*, and traverse them later.
-			dirs = append(dirs, f.Name())
-		} else if f.Mode().IsRegular() && strings.HasSuffix(f.Name(), ".yang") {
+	walkDirFn := func(p string, d fs.DirEntry, err error) error {
+		f, err := d.Info()
+		if err != nil {
+			return fmt.Errorf("traverseDir fails to call d.Info(): %v", err)
+		}
+		if f.Mode().IsRegular() && strings.HasSuffix(f.Name(), ".yang") {
 			// Only search for files with suffix of `.yang`
-			fullpath := dir + "/" + f.Name()
-			currDir := path.Dir(fullpath)
+			currDir := path.Dir(p)
 			// currDir is the name of current directory containing this module file.
+			// For simplicity, here we directly choose the last level diretcory's name as currDir,
+			// since openconfig repo only contains one level sub-directory inside *models* or *ietf* directories.
 			currDir = currDir[strings.LastIndex(currDir, "/")+1:]
-			file, err := os.Open(fullpath)
+			file, err := os.Open(p)
 			if err != nil {
-				return nil, fmt.Errorf("traverseDir: failed to open file %s: %v", fullpath, err)
+				return fmt.Errorf("traverseDir: failed to open file %s: %v", p, err)
 			}
 			// *name* is name of yang module/submodule, we get it by removing `.yang` from original file name.
 			name := f.Name()[:len(f.Name())-5]
 
 			// Check whether found module is under `models` directory or `ietf` dirctory.
-			if strings.Contains(fullpath, modelKeyword) {
+			if strings.Contains(p, modelKeyword) {
 				// Modules/submodules under `models` dirctory are under subdirectory (*currDir*) of `models` directory.
 				// Store url of found module/submodule in urlMap.
 				urlMap[name] = url + modelDir + "/" + currDir + "/" + f.Name()
 			} else {
 				// Found modules must be either under `models` directory or `ietf` directory.
-				if !(strings.Contains(fullpath, ietfKeyword)) {
-					return nil, fmt.Errorf("traverseDir: model %s not in either models dir or ietd dir", f.Name())
+				if !(strings.Contains(p, ietfKeyword)) {
+					return fmt.Errorf("traverseDir: model %s not in either models dir or ietd dir", f.Name())
 				}
 				// `ietf` directory does not have subdirectory.
 				// Store url of found module/submodule in urlMap.
@@ -107,24 +105,20 @@ func traverseDir(dir string, url string) ([]string, error) {
 			scanner.Scan()
 
 			// Only append `module` and ignore `submodules`.
+			// Note this is specific to openconfig repo only.
+			// For other repos with comments before schema of modules, its content may not start with *module* keyword.
 			if strings.HasPrefix(strings.TrimSpace(scanner.Text()), "module ") {
 				names = append(names, name)
 			} else {
-				log.Println(fullpath + " does not have modules")
+				log.Println(p + " does not have modules")
 			}
 			file.Close()
 		}
+		return nil
 	}
 
-	// Traverse found subdirectories.
-	for _, dirName := range dirs {
-		newnames, err := traverseDir(dir+"/"+dirName, url)
-		if err != nil {
-			return nil, err
-		}
-		names = append(names, newnames...)
-	}
-	return names, nil
+	err := filepath.WalkDir(dir, walkDirFn)
+	return names, err
 }
 
 var stop = os.Exit
