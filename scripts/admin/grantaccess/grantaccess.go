@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/iterator"
@@ -26,7 +27,6 @@ import (
 )
 
 const (
-	projectID       = `disco-idea-817`
 	baseAccessField = `allow`
 )
 
@@ -55,6 +55,10 @@ func main() {
 
 	// Set up firebase configuration.
 	ctx := context.Background()
+	projectID, ok := os.LookupEnv("CLOUDSDK_CORE_PROJECT")
+	if !ok {
+		log.Fatalf("$CLOUDSDK_CORE_PROJECT not set.")
+	}
 	config := &firebase.Config{ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, config, opt)
 
