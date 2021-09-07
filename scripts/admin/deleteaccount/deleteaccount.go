@@ -18,13 +18,10 @@ import (
 	"context"
 	"flag"
 	"log"
+	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
-)
-
-const (
-	projectID = `disco-idea-817`
 )
 
 func main() {
@@ -40,6 +37,10 @@ func main() {
 
 	// Set up firebase configuration.
 	ctx := context.Background()
+	projectID, ok := os.LookupEnv("CLOUDSDK_CORE_PROJECT")
+	if !ok {
+		log.Fatalf("$CLOUDSDK_CORE_PROJECT not set.")
+	}
 	config := &firebase.Config{ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, config, opt)
 

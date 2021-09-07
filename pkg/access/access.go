@@ -28,12 +28,10 @@ import (
 )
 
 // const variables related to token validation.
-// *projectID* is the id of project where the server is running in Google Cloud Platform.
 // *delimiter* is delimiter for claim string of a list of names of organizations that the token owner has access to.
 // *accessField* is field name of claim that contains the list of names of organizations that one has access to.
 // Note that organization's names should not contain delimiter.
 const (
-	projectID       = `disco-idea-817`
 	delimiter       = `,`
 	baseAccessField = `allow`
 )
@@ -47,13 +45,17 @@ func GetAccessField() (string, error) {
 	return (dbname + "-" + baseAccessField), nil
 }
 
-// ParseAcess takes input of a token string.
+// ParseAccess takes input of a token string.
 // It first validates whether the token is valid using firebase,
 // then parses from the token's claims a list organization names to which that the token owner has write access.
 // If token is invalid, an error is returned.
 func ParseAccess(token string) ([]string, error) {
 	// Set up firebase configuration to use correct token validation method.
 	ctx := context.Background()
+	projectID, ok := os.LookupEnv("PROJECT_ID")
+	if !ok {
+		return nil, fmt.Errorf("$PROJECT_ID not set")
+	}
 	config := &firebase.Config{ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, config)
 	if err != nil {
