@@ -22,6 +22,7 @@ import (
 	"os"
 
 	firebase "firebase.google.com/go/v4"
+	"google.golang.org/api/impersonate"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -31,7 +32,6 @@ const (
 )
 
 func main() {
-	var keyPathPtr = flag.String("key", "", "file path of admin key")
 	var emailPtr = flag.String("email", "", "email account that you want to change access for")
 	var accessPtr = flag.String("access", "", "string of a list of organizations that account would be granted access to, seperated by delimiter. If not set, it means set empty access for this account")
 	var listall = flag.Bool("all", false, "whether to list all current users' claims")
@@ -39,27 +39,40 @@ func main() {
 
 	flag.Parse()
 
-	if *keyPathPtr == "" {
-		log.Fatalf("Please provide path to key file\n")
-	}
-
 	if *dbnamePtr == "" {
-		log.Fatalf("Please provide db name\n")
+		flag.CommandLine.SetOutput(os.Stderr)
+		fmt.Fprintf(os.Stderr, "Please provide db name\n")
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	if *listall == false && *emailPtr == "" {
-		log.Fatalf("Please provide either provide email address or specify list `all`\n")
+	if !*listall && *emailPtr == "" {
+		flag.CommandLine.SetOutput(os.Stderr)
+		fmt.Fprintf(os.Stderr, "Please provide either provide email address or specify list `all`\n")
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	opt := option.WithCredentialsFile(*keyPathPtr)
-
-	// Set up firebase configuration.
-	ctx := context.Background()
 	projectID, ok := os.LookupEnv("CLOUDSDK_CORE_PROJECT")
 	if !ok {
 		log.Fatalf("$CLOUDSDK_CORE_PROJECT not set.")
 	}
-	config := &firebase.Config{ProjectID: projectID}
+
+	ctx := context.Background()
+	// Impersonate service account.
+	ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
+		TargetPrincipal: fmt.Sprintf("sa-claims@%s.iam.gserviceaccount.com", projectID),
+		Scopes:          []string{"https://www.googleapis.com/auth/cloud-platform"},
+	})
+	if err != nil {
+		log.Fatalf("impersonation failed: %v", err)
+	}
+	opt := option.WithTokenSource(ts)
+
+	// Set up firebase configuration.
+	config := &firebase.Config{
+		ProjectID: projectID,
+	}
 	app, err := firebase.NewApp(ctx, config, opt)
 
 	if err != nil {
@@ -67,7 +80,7 @@ func main() {
 	}
 	client, err := app.Auth(ctx)
 	if err != nil {
-		log.Fatalf("Generate firebase authentication admin failed\n")
+		log.Fatalf("Generate firebase authentication admin failed: %v\n", err)
 	}
 
 	accessField := *dbnamePtr + "-" + baseAccessField

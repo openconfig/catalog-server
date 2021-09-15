@@ -17,30 +17,41 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
 	firebase "firebase.google.com/go/v4"
+	"google.golang.org/api/impersonate"
 	"google.golang.org/api/option"
 )
 
 func main() {
-	var keyPathPtr = flag.String("key", "", "file path of admin key")
 	var emailPtr = flag.String("email", "", "email account that you want to change access for")
 	flag.Parse()
 
-	if *keyPathPtr == "" || *emailPtr == "" {
-		log.Fatalf("Please provide all required inputs\n")
+	if *emailPtr == "" {
+		flag.CommandLine.SetOutput(os.Stderr)
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	opt := option.WithCredentialsFile(*keyPathPtr)
-
-	// Set up firebase configuration.
-	ctx := context.Background()
 	projectID, ok := os.LookupEnv("CLOUDSDK_CORE_PROJECT")
 	if !ok {
 		log.Fatalf("$CLOUDSDK_CORE_PROJECT not set.")
 	}
+
+	ctx := context.Background()
+	ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
+		TargetPrincipal: fmt.Sprintf("sa-claims@%s.iam.gserviceaccount.com", projectID),
+		Scopes:          []string{"https://www.googleapis.com/auth/cloud-platform"},
+	})
+	if err != nil {
+		log.Fatalf("impersonation failed: %v", err)
+	}
+	opt := option.WithTokenSource(ts)
+
+	// Set up firebase configuration.
 	config := &firebase.Config{ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, config, opt)
 
