@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-go build
 git clone https://github.com/openconfig/public.git
 # Copy ietf directory for backup usage.
 cp -r ./public/third_party/ietf .
@@ -37,7 +36,7 @@ do
     cd ..
     echo "./crawl -p $path -u https://raw.githubusercontent.com/openconfig/public/$commit/"
 
-    ./crawl -p $path -u https://raw.githubusercontent.com/openconfig/public/$commit/
+    go run crawl.go -p $path -u https://raw.githubusercontent.com/openconfig/public/$commit/
     cd public
     # Track how many commits the script has crawled.
     echo $times
