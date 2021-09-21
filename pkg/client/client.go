@@ -46,7 +46,7 @@ func NewClient(filepath string) (*Client, error) {
 	token := ""
 	if filepath != "" {
 		var err error
-		token, err = ReadAuthToken(filepath)
+		token, err = readAuthToken(filepath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create a new Client, read token failed: %v", err)
 		}
@@ -54,12 +54,12 @@ func NewClient(filepath string) (*Client, error) {
 	return &Client{token: token}, nil
 }
 
-// ReadAuthToken takes in *filepath* of token file, reads token and returns token string.
+// readAuthToken takes in *filepath* of token file, reads token and returns token string.
 // This token is used when server is deployed on Google Cloud Run and only avaiable to permitted users.
 // In this case, users need to include a header with identity token to get access to catalog server.
 // This token can be obtained via the command `glcoud auth print-identity-token`.
 // Reference: https://cloud.google.com/sdk/gcloud/reference/auth/print-identity-token.
-func ReadAuthToken(filepath string) (string, error) {
+func readAuthToken(filepath string) (string, error) {
 	token, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return "", fmt.Errorf("Read Auth token from file failed: %v", err)
