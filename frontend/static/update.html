@@ -34,9 +34,10 @@
     <!-- Note the codes below should be replaced with boilerplate codes from identity platform of your project where catalog server is running-->
     <!-- START -->
     <script src="https://www.gstatic.com/firebasejs/8.9.0/firebase.js"></script>
+    <!-- TODO:  The apiKey has been rotated.  A future PR should refactor this out of the code-->
     <script>
         var config = {
-            apiKey: "AIzaSyBvyT9x6PnxGO3QC97xduPxHBDU53GLeLI",
+            apiKey: "xxxx",  
             authDomain: "{{ .ProjectID }}.firebaseapp.com",
         };
         firebase.initializeApp(config);
