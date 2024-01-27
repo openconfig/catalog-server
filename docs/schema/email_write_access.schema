@@ -1,0 +1,5 @@
+CREATE TABLE email_write_access (
+    email varchar(1024) NOT NULL,
+    orgName text NOT NULL,
+    PRIMARY KEY(email, orgname)
+);
