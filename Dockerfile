@@ -46,5 +46,7 @@ COPY --from=builder /app/server /app/server
 
 COPY frontend/static/* /frontend/static/
 
+COPY index.html /
+
 # Run the web service on container startup.
 CMD ["/app/server"]

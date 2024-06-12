@@ -51,7 +51,7 @@ func main() {
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 
 	// Launch built-in graphQL frontend server.
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	// Set handler for all queries.
 	http.Handle("/query", srv)
 
@@ -81,6 +81,12 @@ func main() {
 		"/static/",
 		func(w http.ResponseWriter, r *http.Request) {
 			fileServer.ServeHTTP(w, r)
+		},
+	)
+	http.HandleFunc(
+		"/",
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "index.html")
 		},
 	)
 
