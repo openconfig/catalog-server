@@ -274,8 +274,8 @@
                     tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].Version + `</th>`
                     if (queryType == "ModulesByOrgName" || queryType == "ModulesByKey") {
                         tableContent += `<th class="mdc-data-table__cell " scope="row "><a href="` + modules[i].URL + `">URL</a>` + `</th>`
+                        tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].Summary + `</th>`
                     }
-                    tableContent += `<th class="mdc-data-table__cell " scope="row ">` + modules[i].Summary + `</th>`
                     tableContent += `<th class="mdc-data-table__cell " scope="row ">
                     <div class="mdc-touch-target-wrapper ">
                     <button class="mdc-button mdc-button--touch " onclick="download( '` + i + `') ">
