@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Program yang crawls all modules at certain commit of `https://github.com/openconfig/public`.
-// Usage: yang [--path DIR] [--url URL]
+// Program crawl crawls all modules at certain commit of `https://github.com/openconfig/public`.
+// Usage: crawl [--path DIR] [--url URL]
 //
 // DIR is a comma separated list of paths that are appended as the search directory.
 // If DIR appears as DIR/... then DIR and all direct and indirect subdirectories are checked.
@@ -146,6 +146,10 @@ func crawlModules(paths []string, url string) (map[string]*yang.Module, []string
 	// all modules in these directories and crawl them later.
 	if len(files) == 0 {
 		for _, path := range paths {
+			if _, err := os.Stat(path); err != nil {
+				log.Printf("WARNING: Cannot crawl in provided path: %v", err)
+				continue
+			}
 			names, err := traverseDir(path, url)
 			if err != nil {
 				log.Fatalf("traverse directory %s failed: %v", path, err)
@@ -280,14 +284,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	mods, names := crawlModules(paths, url)
-
 	// Connect to DB
 	if err := db.ConnectDB(); err != nil {
 		log.Fatalf("Connect to db failed: %v", err)
 		stop(1)
 	}
 	defer db.Close()
+
+	mods, names := crawlModules(paths, url)
 
 	// Convert all found modules into ygot go structure of Module and insert them into database.
 	for _, n := range names {
