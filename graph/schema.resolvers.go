@@ -23,7 +23,6 @@ import (
 
 	"github.com/openconfig/catalog-server/graph/generated"
 	"github.com/openconfig/catalog-server/graph/model"
-	"github.com/openconfig/catalog-server/pkg/access"
 	"github.com/openconfig/catalog-server/pkg/db"
 	"github.com/openconfig/catalog-server/pkg/dbtograph"
 	"github.com/openconfig/catalog-server/pkg/validate"
@@ -34,7 +33,7 @@ func (r *mutationResolver) CreateModule(ctx context.Context, input model.NewModu
 	successMsg := `Success`
 
 	// Validate the token and check whether it contains access to certain organization
-	if err := access.CheckAccess(token, input.OrgName); err != nil {
+	if err := db.CheckAccess(token, input.OrgName); err != nil {
 		return failMsg, fmt.Errorf("CreateModule: validate token failed: %v", err)
 	}
 
@@ -57,7 +56,7 @@ func (r *mutationResolver) DeleteModule(ctx context.Context, input model.ModuleK
 	successMsg := `Success`
 
 	// Validate the token and check whether it contains access to certain organization
-	if err := access.CheckAccess(token, input.OrgName); err != nil {
+	if err := db.CheckAccess(token, input.OrgName); err != nil {
 		return failMsg, fmt.Errorf("DeleteModule: validate token failed: %v", err)
 	}
 
@@ -74,7 +73,7 @@ func (r *mutationResolver) CreateFeatureBundle(ctx context.Context, input model.
 	successMsg := `Success`
 
 	// Validate the token and check whether it contains access to certain organization
-	if err := access.CheckAccess(token, input.OrgName); err != nil {
+	if err := db.CheckAccess(token, input.OrgName); err != nil {
 		return failMsg, fmt.Errorf("CreateFeatureBundle: validate token failed: %v", err)
 	}
 
@@ -97,7 +96,7 @@ func (r *mutationResolver) DeleteFeatureBundle(ctx context.Context, input model.
 	successMsg := `Success`
 
 	// Validate the token and check whether it contains access to certain organization
-	if err := access.CheckAccess(token, input.OrgName); err != nil {
+	if err := db.CheckAccess(token, input.OrgName); err != nil {
 		return failMsg, fmt.Errorf("DeleteFeatureBundle: validate token failed: %v", err)
 	}
 
