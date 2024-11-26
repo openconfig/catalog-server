@@ -16,7 +16,6 @@
 Package db contains functions related to database.
  * db.go includes conneting to db, query and insertion.
  * dbschema.go contains definitions of struct for db tables.
-   Currently it only contains Module struct.
 */
 package db
 
@@ -40,7 +39,8 @@ const (
 	selectModules = `select * from modules`
 	// We want to ensure that user has to provide all three inputs,
 	// instead of deleting too many modules by mistake with some fields missing.
-	deleteModule         = `delete from modules where orgName = $1 and name = $2 and version = $3`
+	deleteModule = `delete from modules where orgName = $1 and name = $2 and version = $3`
+
 	selectFeatureBundles = `select * from featureBundles`
 	// $4 and $5 should be assigned with the same value (the JSON data of feature-bundle).
 	insertFeatureBundle = `INSERT INTO featureBundles (orgName, name, version, data) VALUES($1, $2, $3, $4) on conflict (orgName, name, version) do update set data=$5`
@@ -161,10 +161,10 @@ func InsertModule(orgName string, name string, version string, data string) erro
 	return nil
 }
 
-// ReadModulesByRow scans from queried modules from rows one by one, rows are closed inside.
+// readModulesByRow scans from queried modules from rows one by one, rows are closed inside.
 // Return slice of db Module struct each field of which corresponds to one column in db.
 // Error is returned when scan rows failed.
-func ReadModulesByRow(rows *sql.Rows) ([]Module, error) {
+func readModulesByRow(rows *sql.Rows) ([]Module, error) {
 	var modules []Module
 	defer rows.Close()
 	for rows.Next() {
@@ -177,10 +177,10 @@ func ReadModulesByRow(rows *sql.Rows) ([]Module, error) {
 	return modules, nil
 }
 
-// FormatQueryStr is used to generate query statement string based on query parameters.
+// formatQueryStr is used to generate query statement string based on query parameters.
 // * parmNames is a list of names of all non-nil query parameters.
 // * baseQuery is query statement without any query parameters.
-func FormatQueryStr(parmNames []string, baseQuery string) string {
+func formatQueryStr(parmNames []string, baseQuery string) string {
 	queryStmt := baseQuery
 	for i := 0; i < len(parmNames); i++ {
 		if i == 0 {
@@ -207,7 +207,7 @@ func QueryModulesByOrgName(orgName *string) ([]Module, error) {
 	}
 
 	// Format query statement string based on non-nil query parameters
-	queryStmt := FormatQueryStr(parmNames, selectModules)
+	queryStmt := formatQueryStr(parmNames, selectModules)
 
 	rows, err := db.Query(queryStmt, parms...)
 	if err != nil {
@@ -216,7 +216,7 @@ func QueryModulesByOrgName(orgName *string) ([]Module, error) {
 
 	defer rows.Close()
 
-	return ReadModulesByRow(rows)
+	return readModulesByRow(rows)
 }
 
 // QueryModulesByKey queries modules by its key (name, version), it is possible that parameters are null.
@@ -238,7 +238,7 @@ func QueryModulesByKey(name *string, version *string) ([]Module, error) {
 	}
 
 	// Format query statement string based on non-nil query parameters
-	queryStmt := FormatQueryStr(parmNames, selectModules)
+	queryStmt := formatQueryStr(parmNames, selectModules)
 
 	rows, err := db.Query(queryStmt, parms...)
 	if err != nil {
@@ -247,7 +247,7 @@ func QueryModulesByKey(name *string, version *string) ([]Module, error) {
 
 	defer rows.Close()
 
-	return ReadModulesByRow(rows)
+	return readModulesByRow(rows)
 }
 
 // DeleteModule takes three string, orgName, name, version,
@@ -271,16 +271,16 @@ func DeleteModule(orgName string, name string, version string) error {
 	return nil
 }
 
-// ReadFeatureBundlesByRow scans from queried FeatureBundles from rows one by one, rows are closed inside.
+// readFeatureBundlesByRow scans from queried FeatureBundles from rows one by one, rows are closed inside.
 // Return slice of db FeatureBundle struct each field of which corresponds to one column in db.
 // Error is returned when scan rows failed.
-func ReadFeatureBundlesByRow(rows *sql.Rows) ([]FeatureBundle, error) {
+func readFeatureBundlesByRow(rows *sql.Rows) ([]FeatureBundle, error) {
 	var featureBundles []FeatureBundle
 	defer rows.Close()
 	for rows.Next() {
 		var featureBundle FeatureBundle
 		if err := rows.Scan(&featureBundle.OrgName, &featureBundle.Name, &featureBundle.Version, &featureBundle.Data); err != nil {
-			return nil, fmt.Errorf("ReadFeatureBundlesByRow: scan db rows failure, %v", err)
+			return nil, fmt.Errorf("readFeatureBundlesByRow: scan db rows failure, %v", err)
 		}
 		featureBundles = append(featureBundles, featureBundle)
 	}
@@ -301,14 +301,14 @@ func QueryFeatureBundlesByOrgName(orgName *string) ([]FeatureBundle, error) {
 	}
 
 	// Format query statement string based on non-nil query parameters
-	queryStmt := FormatQueryStr(parmNames, selectFeatureBundles)
+	queryStmt := formatQueryStr(parmNames, selectFeatureBundles)
 
 	rows, err := db.Query(queryStmt, parms...)
 	if err != nil {
 		return nil, fmt.Errorf("QueryFeatureBundlesByOrgName failed: %v", err)
 	}
 
-	return ReadFeatureBundlesByRow(rows)
+	return readFeatureBundlesByRow(rows)
 }
 
 // InsertFeatureBundle inserts FeatureBundle into database given values of four field of FeatureBundle schema.
@@ -361,12 +361,12 @@ func QueryFeatureBundlesByKey(name *string, version *string) ([]FeatureBundle, e
 	}
 
 	// Format query statement string based on non-nil query parameters
-	queryStmt := FormatQueryStr(parmNames, selectFeatureBundles)
+	queryStmt := formatQueryStr(parmNames, selectFeatureBundles)
 
 	rows, err := db.Query(queryStmt, parms...)
 	if err != nil {
 		return nil, fmt.Errorf("QueryFeatureBundlesByKey failed: %v", err)
 	}
 
-	return ReadFeatureBundlesByRow(rows)
+	return readFeatureBundlesByRow(rows)
 }
